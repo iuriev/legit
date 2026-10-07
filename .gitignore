@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+.idea/
+*.tsbuildinfo
+
+# Local-only notes and translations
+*.ru.md
+docs/test-task-brief.*
