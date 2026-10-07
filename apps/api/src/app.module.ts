@@ -5,8 +5,10 @@ import { APP_FILTER } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { ApiExceptionFilter } from './common/api-exception.filter';
 import { validateEnv } from './config/env';
+import { CvsModule } from './cvs/cvs.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { HealthController } from './health/health.controller';
     }),
     DatabaseModule,
     AuthModule,
+    CvsModule,
+    JobsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_FILTER, useClass: ApiExceptionFilter }],

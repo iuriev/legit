@@ -1,5 +1,6 @@
-import { plainToInstance, Type } from 'class-transformer';
+import { plainToInstance, Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsEnum,
   IsInt,
   IsOptional,
@@ -64,6 +65,52 @@ export class Env {
   @IsInt()
   @Min(1)
   AUTH_RATE_LIMIT_PER_MINUTE = 10;
+
+  /** How often the worker looks for a waiting generation job. */
+  @Type(() => Number)
+  @IsInt()
+  @Min(10)
+  WORKER_POLL_INTERVAL_MS = 1000;
+
+  /**
+   * How long a claimed job is left alone before another worker may take it.
+   * It must exceed the worst case of one attempt, or a slow attempt runs twice.
+   */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  WORKER_LEASE_SECONDS = 600;
+
+  /** How many jobs one API process runs at the same time. */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  WORKER_CONCURRENCY = 3;
+
+  /**
+   * Waits before the second and later attempts of a job, in milliseconds,
+   * separated by commas. A job gets one more attempt than there are waits.
+   */
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string'
+      ? value
+          .split(',')
+          .map((part) => part.trim())
+          .filter((part) => part !== '')
+          .map(Number)
+      : value,
+  )
+  @IsInt({ each: true })
+  @Min(0, { each: true })
+  @ArrayMaxSize(10)
+  WORKER_RETRY_DELAYS_MS: number[] = [5000, 30000];
+
+  /** How long a stopping worker waits for running jobs before handing them back. */
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  WORKER_SHUTDOWN_GRACE_MS = 5000;
 }
 
 export function validateEnv(raw: Record<string, unknown>): Env {

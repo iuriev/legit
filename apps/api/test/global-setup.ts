@@ -20,4 +20,8 @@ export default async function globalSetup(): Promise<void> {
   process.env.AUTH_RATE_LIMIT_PER_MINUTE = '1000';
   // supertest connects over loopback; this lets tests act as different clients.
   process.env.TRUST_PROXY = 'loopback';
+  // The worker reacts at once and does not wait between attempts.
+  process.env.WORKER_POLL_INTERVAL_MS = '20';
+  process.env.WORKER_RETRY_DELAYS_MS = '0,0';
+  process.env.WORKER_SHUTDOWN_GRACE_MS = '200';
 }

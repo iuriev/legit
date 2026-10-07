@@ -15,7 +15,12 @@ export type ApiErrorCode =
   | 'internal_error'
   // Authentication
   | 'email_taken'
-  | 'invalid_credentials';
+  | 'invalid_credentials'
+  // CVs
+  | 'invalid_source'
+  | 'generation_running'
+  | 'cv_limit_reached'
+  | 'not_retryable';
 
 /** The body of every error response of the API. */
 export interface ApiErrorBody {

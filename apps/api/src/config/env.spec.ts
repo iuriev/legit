@@ -32,4 +32,17 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ ...valid, TRUST_PROXY: '1' })).toThrow(/TRUST_PROXY/);
     expect(() => validateEnv({ ...valid, TRUST_PROXY: 'true' })).toThrow(/TRUST_PROXY/);
   });
+
+  it('reads the waits between attempts from a comma-separated list', () => {
+    expect(validateEnv(valid).WORKER_RETRY_DELAYS_MS).toEqual([5000, 30000]);
+    expect(
+      validateEnv({ ...valid, WORKER_RETRY_DELAYS_MS: '0, 10' }).WORKER_RETRY_DELAYS_MS,
+    ).toEqual([0, 10]);
+    expect(validateEnv({ ...valid, WORKER_RETRY_DELAYS_MS: '' }).WORKER_RETRY_DELAYS_MS).toEqual(
+      [],
+    );
+    expect(() => validateEnv({ ...valid, WORKER_RETRY_DELAYS_MS: 'soon' })).toThrow(
+      /WORKER_RETRY_DELAYS_MS/,
+    );
+  });
 });

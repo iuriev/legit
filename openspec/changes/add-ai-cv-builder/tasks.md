@@ -22,12 +22,12 @@
 
 ## 4. CVs and the job runner
 
-- [ ] 4.1 Define the CV document, state, stage, failure-code and endpoint types in `packages/contracts`, with zod schemas for the document in the API; verify both apps typecheck against them and unit tests cover the length and count limits
-- [ ] 4.2 Add the `cvs`, `cv_sources`, `facts`, `questions` and `generation_jobs` migrations with the constraints and indexes from the design; verify the migrations apply and revert
-- [ ] 4.3 Implement `POST /api/cvs` (multipart PDF or text, target role, limits, PDF signature check, one running generation per user), storing the CV, source and `extract` job in one transaction; verify with e2e tests for each scenario of "Starting a CV", "Input limits" and "One generation at a time"
-- [ ] 4.4 Implement `GET /api/cvs`, `GET /api/cvs/:id` and `DELETE /api/cvs/:id` scoped to the session's user; verify with e2e tests for listing order, deletion, and that a second user gets 404 on every one of them
-- [ ] 4.5 Implement the job runner: the claiming statement with `SKIP LOCKED` and a lease, the poller, stage handlers registered by kind, transient re-queueing with delays, exhaustion after three attempts and the error classification; verify with e2e tests using a fake handler that a job runs once, that an expired lease is claimed again, that a transient error is retried and that a permanent error fails at once
-- [ ] 4.6 Implement `POST /api/cvs/:id/retry` for failures that can be retried; verify with e2e tests for both scenarios of "Manual retry"
+- [x] 4.1 Define the CV document, state, stage, failure-code and endpoint types in `packages/contracts`, with zod schemas for the document in the API; verify both apps typecheck against them and unit tests cover the length and count limits
+- [x] 4.2 Add the `cvs`, `cv_sources`, `facts`, `questions` and `generation_jobs` migrations with the constraints and indexes from the design; verify the migrations apply and revert
+- [x] 4.3 Implement `POST /api/cvs` (multipart PDF or text, target role, limits, PDF signature check, one running generation per user), storing the CV, source and `extract` job in one transaction; verify with e2e tests for each scenario of "Starting a CV", "Input limits" and "One generation at a time"
+- [x] 4.4 Implement `GET /api/cvs`, `GET /api/cvs/:id` and `DELETE /api/cvs/:id` scoped to the session's user; verify with e2e tests for listing order, deletion, and that a second user gets 404 on every one of them
+- [x] 4.5 Implement the job runner: the claiming statement with `SKIP LOCKED` and a lease, the poller, stage handlers registered by kind, transient re-queueing with delays, exhaustion after three attempts and the error classification; verify with e2e tests using a fake handler that a job runs once, that an expired lease is claimed again, that a transient error is retried and that a permanent error fails at once
+- [x] 4.6 Implement `POST /api/cvs/:id/retry` for failures that can be retried; verify with e2e tests for both scenarios of "Manual retry"
 
 ## 5. Reading the source and asking questions
 

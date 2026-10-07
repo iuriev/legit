@@ -7,6 +7,7 @@ import { DataSource } from 'typeorm';
 
 import { ApiException } from '../common/api.exception';
 import type { Env } from '../config/env';
+import { isUniqueViolation } from '../database/pg-errors';
 import { User } from '../users/user.entity';
 import { PASSWORD_MAX_LENGTH } from './dto/credentials.dto';
 import type { SessionPayload } from './session';
@@ -15,9 +16,6 @@ export interface AuthResult {
   user: AuthUser;
   sessionToken: string;
 }
-
-/** Unique violation: the email already has an account. */
-const PG_UNIQUE_VIOLATION = '23505';
 
 @Injectable()
 export class AuthService {
@@ -96,18 +94,4 @@ export class AuthService {
       sessionToken: await this.jwtService.signAsync(payload),
     };
   }
-}
-
-function isUniqueViolation(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null) {
-    return false;
-  }
-  // TypeORM wraps the driver's error and keeps it as `driverError`.
-  const driverError = 'driverError' in error ? error.driverError : error;
-  return (
-    typeof driverError === 'object' &&
-    driverError !== null &&
-    'code' in driverError &&
-    driverError.code === PG_UNIQUE_VIOLATION
-  );
 }
