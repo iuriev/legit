@@ -15,7 +15,7 @@ export type CvSourceInput = { kind: 'pdf'; pdf: Buffer } | { kind: 'text'; text:
 const FIRST_STAGE: Record<JobKind, CvStage> = { extract: 'reading', compose: 'writing' };
 
 /** Bounds what one account can store. */
-export const MAX_CVS_PER_USER = 50;
+export const MAX_CVS_PER_USER = 5;
 
 const generationRunning = () =>
   new ApiException(
