@@ -1,0 +1,35 @@
+schema: spec-driven
+
+context: |
+  Test task: an AI CV builder. A signed-in user uploads a CV as a PDF or pastes free text, names a
+  target role, answers clarifying questions and gets a CV to review, edit and download as an A4 PDF.
+  The brief evaluates whether the whole flow works, the system design, handling of failures and of
+  untrusted input (including LLM output), the trade-offs made within ten hours, and ownership of
+  AI-generated code. When time runs out, features are cut before reliability, and every cut is
+  recorded in the README.
+  All tracked artifacts, documentation, code comments and commit messages are written in English.
+  Commits follow Conventional Commits (enforced by commitlint).
+  Fixed stack: NestJS + TypeORM + class-validator, PostgreSQL, React (Vite, single-page app) with
+  CSS Modules, the Anthropic API for every LLM call, pnpm workspaces, Jest, Testcontainers,
+  ESLint + Prettier with import sorting.
+  The system runs locally with `docker compose up`; ANTHROPIC_API_KEY is the only secret. There is
+  no deployment.
+  Out of scope by the brief: multiple templates, tailoring to a job description, OAuth, password
+  reset, email verification, payments, an admin panel.
+  Files matching *.ru.md and the brief are local-only and must not be committed.
+
+rules:
+  tasks:
+    - Each task group ends in a state that passes lint, typecheck and tests, so it can be committed on its own
+
+operations:
+  apply:
+    guidance:
+      - Implement one task group at a time, then stop and wait for the owner's confirmation before starting the next group
+      - Before any HTML, CSS or client-side JavaScript work in apps/web, load the modern-web-guidance skill and follow it
+      - Before writing or changing code that calls the Anthropic API, load the claude-api skill and follow its TypeScript reference
+      - After implementing a group, run the code-reviewer subagent on its diff and resolve every blocking finding
+      - Then run the qa-tester subagent to verify the group's spec scenarios against the running system
+      - Make one Conventional Commit per task group and push it to main, only after both subagents pass
+      - In the stop report, include the reviewer's findings and the tester's results as they were returned
+      - Do not add scope beyond tasks.md; record ideas in the README section on what was simplified
