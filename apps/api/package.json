@@ -2,5 +2,46 @@
   "name": "@cv-builder/api",
   "version": "0.0.0",
   "private": true,
-  "description": "NestJS HTTP API and generation worker"
+  "description": "NestJS HTTP API and generation worker",
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js",
+    "test:e2e": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --config jest.e2e.config.js",
+    "migration:run": "nest build && typeorm migration:run -d dist/database/data-source.js",
+    "migration:revert": "nest build && typeorm migration:revert -d dist/database/data-source.js",
+    "migration:show": "nest build && typeorm migration:show -d dist/database/data-source.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "^12.1.2",
+    "@nestjs/config": "^12.0.1",
+    "@nestjs/core": "^12.1.2",
+    "@nestjs/platform-express": "^12.1.2",
+    "@nestjs/typeorm": "^12.0.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "cookie-parser": "^1.4.7",
+    "helmet": "^8.3.0",
+    "pg": "^8.23.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "typeorm": "^1.1.1"
+  },
+  "devDependencies": {
+    "@cv-builder/contracts": "workspace:*",
+    "@nestjs/cli": "^12.0.8",
+    "@nestjs/schematics": "^12.0.6",
+    "@nestjs/testing": "^12.1.2",
+    "@testcontainers/postgresql": "^12.2.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.19.1",
+    "@types/supertest": "^7.2.1",
+    "jest": "^30.5.2",
+    "supertest": "^7.3.1",
+    "ts-jest": "^29.4.14"
+  }
 }

@@ -1,3 +1,10 @@
 packages:
   - apps/*
   - packages/*
+allowBuilds:
+  '@parcel/watcher': true
+  '@scarf/scarf': false
+  cpu-features: false
+  protobufjs: false
+  ssh2: false
+  unrs-resolver: true
