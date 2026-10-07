@@ -2,10 +2,10 @@
 
 ## 1. Workspace and tooling
 
-- [ ] 1.1 Create the pnpm workspace (`apps/api`, `apps/web`, `packages/contracts`), root `package.json` with `packageManager` and `engines`, `.nvmrc`, shared `tsconfig.base.json`; verify `pnpm install` succeeds
-- [ ] 1.2 Add the root ESLint flat config (typescript-eslint type-checked, simple-import-sort, prettier compatibility) and Prettier config with `lint`, `format` and `typecheck` scripts; verify `pnpm lint` and `pnpm format:check` pass on the empty workspace
-- [ ] 1.3 Add husky, lint-staged and commitlint (conventional config); verify a commit with a non-conventional message is rejected and a staged file is formatted on commit
-- [ ] 1.4 Add `docker-compose.dev.yml` with PostgreSQL and `.env.example` files; verify the database accepts connections with the documented credentials
+- [x] 1.1 Create the pnpm workspace (`apps/api`, `apps/web`, `packages/contracts`), root `package.json` with `packageManager` and `engines`, `.nvmrc`, shared `tsconfig.base.json`; verify `pnpm install` succeeds
+- [x] 1.2 Add the root ESLint flat config (typescript-eslint type-checked, simple-import-sort, prettier compatibility) and Prettier config with `lint`, `format` and `typecheck` scripts; verify `pnpm lint` and `pnpm format:check` pass on the empty workspace
+- [x] 1.3 Add husky, lint-staged and commitlint (conventional config); verify a commit with a non-conventional message is rejected and a staged file is formatted on commit
+- [x] 1.4 Add `docker-compose.dev.yml` with PostgreSQL and `.env.example` files; verify the database accepts connections with the documented credentials
 
 ## 2. API foundation
 

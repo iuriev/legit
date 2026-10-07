@@ -1,0 +1,16 @@
+{
+  "name": "@cv-builder/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript types of the HTTP API shared by the API and the web app",
+  "type": "module",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
