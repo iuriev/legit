@@ -160,11 +160,11 @@ Alternatives considered: one call that returns the CV and the questions from the
 
 ### Authentication
 
-- Passwords are hashed with bcrypt. The session is a signed JWT in an `httpOnly`, `SameSite=Lax` cookie, `Secure` when served over HTTPS.
+- Passwords are hashed with bcrypt, which reads only the first 72 bytes of its input, so a longer password is rejected at registration instead of being silently truncated. The session is a signed JWT in an `httpOnly`, `SameSite=Lax` cookie, `Secure` when served over HTTPS.
 - The signing key is generated on first start and stored in `app_secrets`. The brief allows one secret, the API key; a key in the database is unique per installation and survives restarts, where a default in `docker-compose.yml` would be the same for everyone who clones the repository.
 - A global guard protects every route unless it is marked public. Handlers take the user from the session only. Every query on a CV carries `user_id = :sessionUser`; a miss is `404`, so the API does not confirm that another user's CV exists.
 - `SameSite=Lax` keeps the cookie off cross-site `POST`, `PUT` and `DELETE` requests, including the multipart upload, which a JSON-only rule could not protect.
-- Registration and sign-in are rate-limited per client address.
+- Registration and sign-in are rate-limited per client address and email, with a ceiling per client address across all emails. Behind the web server the client address comes from `X-Forwarded-For`, which the API believes only from the network named in `TRUST_PROXY`.
 - Registration says when an email is already registered. That reveals which emails have accounts; hiding it needs email verification, which the brief excludes.
 
 ### Uploads

@@ -12,7 +12,10 @@ export type ApiErrorCode =
   | 'unsupported_media_type'
   | 'rate_limited'
   | 'bad_request'
-  | 'internal_error';
+  | 'internal_error'
+  // Authentication
+  | 'email_taken'
+  | 'invalid_credentials';
 
 /** The body of every error response of the API. */
 export interface ApiErrorBody {

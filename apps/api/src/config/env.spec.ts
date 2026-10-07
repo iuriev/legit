@@ -25,4 +25,11 @@ describe('validateEnv', () => {
   it('rejects a port outside the valid range', () => {
     expect(() => validateEnv({ ...valid, PORT: '70000' })).toThrow(/PORT/);
   });
+
+  it('accepts a named proxy network and refuses a hop count or a boolean', () => {
+    expect(validateEnv({ ...valid, TRUST_PROXY: 'loopback' }).TRUST_PROXY).toBe('loopback');
+    expect(validateEnv(valid).TRUST_PROXY).toBeUndefined();
+    expect(() => validateEnv({ ...valid, TRUST_PROXY: '1' })).toThrow(/TRUST_PROXY/);
+    expect(() => validateEnv({ ...valid, TRUST_PROXY: 'true' })).toThrow(/TRUST_PROXY/);
+  });
 });

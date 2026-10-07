@@ -1,7 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
+import { Public } from '../auth/public.decorator';
+
 /** Liveness check that also verifies the database connection. */
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(private readonly dataSource: DataSource) {}

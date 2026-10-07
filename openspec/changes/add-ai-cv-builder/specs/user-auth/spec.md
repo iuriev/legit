@@ -18,11 +18,15 @@ The system SHALL create an account from an email and a password and start a sess
 - **THEN** the system rejects the request, says that the email already has an account and starts no session
 
 ### Requirement: Credential rules
-The system SHALL require a syntactically valid email and a password of 8 to 72 characters. Emails SHALL be compared case-insensitively and ignoring surrounding whitespace, and SHALL be unique across accounts.
+The system SHALL require a syntactically valid email and a password of 8 to 72 characters that also takes at most 72 bytes in UTF-8. Emails SHALL be compared case-insensitively and ignoring surrounding whitespace, and SHALL be unique across accounts.
 
 #### Scenario: Password too short
 - **WHEN** a registration request has a password shorter than 8 characters
 - **THEN** the system rejects it with a validation error and creates no account
+
+#### Scenario: Password over 72 bytes
+- **WHEN** a registration request has a password of 40 Cyrillic characters, which takes 80 bytes
+- **THEN** the system rejects it with a validation error saying that the password is too long and creates no account
 
 #### Scenario: Same email in a different case
 - **WHEN** a user registered as "user@example.com" signs in as "User@Example.com"

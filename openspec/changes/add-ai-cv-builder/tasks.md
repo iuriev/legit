@@ -15,10 +15,10 @@
 
 ## 3. Authentication
 
-- [ ] 3.1 Add the `users` and `app_secrets` migrations with a case-insensitive unique email, and generate the session signing key on first start; verify with tests that the same email in a different case is rejected and that a second start reuses the stored key
-- [ ] 3.2 Implement the JWT cookie session, the global guard, `@Public()` and `@CurrentUser()`; verify with e2e tests that a protected route rejects a missing or tampered cookie
-- [ ] 3.3 Implement `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout` and `GET /api/auth/me` with the credential rules; verify with e2e tests for every scenario of the user-auth spec except access to CVs
-- [ ] 3.4 Add rate limiting to the register and login routes; verify with an e2e test that requests above the limit are rejected
+- [x] 3.1 Add the `users` and `app_secrets` migrations with a case-insensitive unique email, and generate the session signing key on first start; verify with tests that the same email in a different case is rejected and that a second start reuses the stored key
+- [x] 3.2 Implement the JWT cookie session, the global guard, `@Public()` and `@CurrentUser()`; verify with e2e tests that a protected route rejects a missing or tampered cookie
+- [x] 3.3 Implement `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout` and `GET /api/auth/me` with the credential rules; verify with e2e tests for every scenario of the user-auth spec except access to CVs
+- [x] 3.4 Add rate limiting to the register and login routes; verify with an e2e test that requests above the limit are rejected
 
 ## 4. CVs and the job runner
 
