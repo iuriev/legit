@@ -22,7 +22,8 @@ export type ApiErrorCode =
   | 'cv_limit_reached'
   | 'not_retryable'
   | 'invalid_answers'
-  | 'invalid_state';
+  | 'invalid_state'
+  | 'version_conflict';
 
 /** The body of every error response of the API. */
 export interface ApiErrorBody {

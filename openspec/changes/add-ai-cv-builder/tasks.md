@@ -45,8 +45,8 @@
 
 ## 7. Editing and PDF export
 
-- [ ] 7.1 Implement `PUT /api/cvs/:id` with document validation and the version-checked update; verify with e2e tests for every scenario of "Manual editing", "Validation of saved documents" and "Version-checked saving"
-- [ ] 7.2 Implement the PDF renderer with PDFKit and embedded Noto Sans, and `GET /api/cvs/:id/pdf` as an attachment; verify with unit tests that read the PDF back (A4 pages, extracted text, omitted empty sections, several pages for long content, diacritics and Cyrillic) and with e2e tests for the download scenarios and a second user getting 404
+- [x] 7.1 Implement `PUT /api/cvs/:id` with document validation and the version-checked update; verify with e2e tests for every scenario of "Manual editing", "Validation of saved documents" and "Version-checked saving"
+- [x] 7.2 Implement the PDF renderer with PDFKit and embedded Noto Sans, and `GET /api/cvs/:id/pdf` as an attachment; verify with unit tests that read the PDF back (A4 pages, extracted text, omitted empty sections, several pages for long content, diacritics and Cyrillic) and with e2e tests for the download scenarios and a second user getting 404
 
 ## 8. Web application
 

@@ -117,6 +117,17 @@ describe('cvDocumentSchema', () => {
     expect(cvDocumentSchema.safeParse(inSkill).success).toBe(false);
   });
 
+  it('rejects half of a surrogate pair, which the database cannot store either', () => {
+    expect(cvDocumentSchema.safeParse({ ...filled(), summary: 'a\ud800b' }).success).toBe(false);
+    expect(cvDocumentSchema.safeParse({ ...filled(), summary: 'a😀b' }).success).toBe(true);
+  });
+
+  it('reports at most twenty problems of a document', () => {
+    const result = cvDocumentSchema.safeParse({ ...filled(), skills: Array<number>(5000).fill(1) });
+
+    expect(result.success ? [] : describeIssues(result.error)).toHaveLength(20);
+  });
+
   it('rejects a missing section, a wrong type and an unknown key', () => {
     const withoutSkills: Partial<CvDocument> = filled();
     delete withoutSkills.skills;

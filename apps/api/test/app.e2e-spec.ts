@@ -60,7 +60,7 @@ describe('Application (e2e)', () => {
   it('answers a JSON body over the size limit with 413, not a server error', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/health')
-      .send({ filler: 'a'.repeat(200_000) })
+      .send({ filler: 'a'.repeat(2_000_000) })
       .expect(413);
 
     expect(response.body).toEqual({

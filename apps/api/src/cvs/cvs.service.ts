@@ -1,8 +1,10 @@
 import type {
   Cv as CvResponse,
+  CvDocument,
   CvFailureCode,
   CvStage,
   CvSummary,
+  SaveCvResponse,
   SubmittedAnswer,
 } from '@cv-builder/contracts';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
@@ -117,6 +119,66 @@ export class CvsService {
       omittedCount: cv.omittedCount,
       version: cv.version,
     };
+  }
+
+  /**
+   * Stores an edited document if the edit was based on the current version.
+   *
+   * One conditional statement decides: there is no moment between reading the
+   * version and writing the document in which another save could slip in. A
+   * save from a device that holds an older version changes nothing and is told
+   * so, instead of silently overwriting what the other device saved.
+   */
+  async save(
+    userId: string,
+    id: string,
+    version: number,
+    document: CvDocument,
+  ): Promise<SaveCvResponse> {
+    const [saved] = await this.dataSource.query<[{ version: number; updated_at: Date }[], number]>(
+      `UPDATE "cvs"
+          SET "document" = $4, "version" = "version" + 1, "updated_at" = now()
+        WHERE "id" = $1 AND "user_id" = $2 AND "state" = 'ready' AND "version" = $3
+        RETURNING "version", "updated_at"`,
+      [id, userId, version, JSON.stringify(document)],
+    );
+    const row = saved[0];
+    if (row) {
+      return { version: row.version, updatedAt: row.updated_at.toISOString() };
+    }
+
+    const cv = await this.dataSource.getRepository(Cv).findOneBy({ id, userId });
+    if (!cv) {
+      throw notFound();
+    }
+    if (cv.state !== 'ready') {
+      throw new ApiException(
+        HttpStatus.CONFLICT,
+        'invalid_state',
+        'Only a finished CV can be edited.',
+      );
+    }
+    throw new ApiException(
+      HttpStatus.CONFLICT,
+      'version_conflict',
+      'This CV was changed somewhere else after you opened it. Load the current version to continue.',
+    );
+  }
+
+  /** The document of a ready CV, for rendering. */
+  async getDocument(userId: string, id: string): Promise<CvDocument> {
+    const cv = await this.dataSource.getRepository(Cv).findOneBy({ id, userId });
+    if (!cv) {
+      throw notFound();
+    }
+    if (cv.state !== 'ready' || !cv.document) {
+      throw new ApiException(
+        HttpStatus.CONFLICT,
+        'invalid_state',
+        'Only a finished CV can be downloaded.',
+      );
+    }
+    return cv.document;
   }
 
   /** Facts, questions, the source and jobs go with the CV through the foreign keys. */

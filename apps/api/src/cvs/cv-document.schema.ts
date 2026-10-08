@@ -21,13 +21,15 @@ export const CV_LIMITS = {
 
 /**
  * A text field of at most `max` characters. PostgreSQL cannot store the NUL
- * character in text or JSON, so it is refused here rather than failing there.
+ * character or half of a surrogate pair in JSON, so both are refused here
+ * rather than failing there.
  */
 const text = (max: number) =>
   z
     .string()
     .max(max)
-    .refine((value) => !value.includes('\u0000'), 'must not contain the NUL character');
+    .refine((value) => !value.includes('\u0000'), 'must not contain the NUL character')
+    .refine((value) => value.isWellFormed(), 'must be well-formed text');
 
 const shortText = text(CV_LIMITS.shortText);
 
@@ -81,6 +83,11 @@ export function emptyCvDocument(): CvDocument {
 }
 
 /** Validation messages that name the field, such as `experience.0.bullets.3: Too big…`. */
+/** How many problems of a document are reported. A hostile body can have hundreds of thousands. */
+const MAX_REPORTED_ISSUES = 20;
+
 export function describeIssues(error: z.ZodError): string[] {
-  return error.issues.map((issue) => `${issue.path.join('.') || 'document'}: ${issue.message}`);
+  return error.issues
+    .slice(0, MAX_REPORTED_ISSUES)
+    .map((issue) => `${issue.path.join('.') || 'document'}: ${issue.message}`);
 }

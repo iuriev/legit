@@ -29,6 +29,7 @@ const PHONE_QUESTION = { section: 'contact', text: 'What is your phone number?' 
 describe('Reading the source and asking questions (e2e)', () => {
   const stub = new AnthropicStub();
   let app: INestApplication<App>;
+  let releaseHeldJobs: () => void;
   let dataSource: DataSource;
   let cookie: string;
 
@@ -55,7 +56,7 @@ describe('Reading the source and asking questions (e2e)', () => {
 
   beforeAll(async () => {
     await stub.start();
-    ({ app } = await createGenerationApp(stub));
+    ({ app, releaseHeldJobs } = await createGenerationApp(stub));
     dataSource = app.get(DataSource);
   });
 
@@ -65,6 +66,7 @@ describe('Reading the source and asking questions (e2e)', () => {
   });
 
   afterEach(async () => {
+    releaseHeldJobs();
     await resetDatabase(app);
   });
 

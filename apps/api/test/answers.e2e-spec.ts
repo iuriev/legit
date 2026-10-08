@@ -16,6 +16,7 @@ const QUESTIONS = [
 describe('Answering questions (e2e)', () => {
   const stub = new AnthropicStub();
   let app: INestApplication<App>;
+  let releaseHeldJobs: () => void;
   let dataSource: DataSource;
   let owner: Session;
   let cv: Cv;
@@ -57,7 +58,7 @@ describe('Answering questions (e2e)', () => {
 
   beforeAll(async () => {
     await stub.start();
-    ({ app } = await createGenerationApp(stub));
+    ({ app, releaseHeldJobs } = await createGenerationApp(stub));
     dataSource = app.get(DataSource);
   });
 
@@ -69,6 +70,7 @@ describe('Answering questions (e2e)', () => {
   });
 
   afterEach(async () => {
+    releaseHeldJobs();
     await resetDatabase(app);
   });
 

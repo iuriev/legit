@@ -14,23 +14,31 @@ export interface GenerationApp {
   app: INestApplication<App>;
   /** What the application does with a `compose` job. A test may replace it. */
   compose: { handler: JobHandler };
+  /**
+   * Lets every held `compose` job finish without writing anything. A held job
+   * occupies one of the worker's slots, so a test file calls this after each
+   * test; otherwise a few tests would use up all slots and the next reading
+   * job would never start.
+   */
+  releaseHeldJobs: () => void;
 }
 
 /**
  * The application with the real reading stage talking to the stub, and a
- * `compose` stage that a test controls. By default a `compose` job is left
- * running, so a test can look at what the reading stage and the answers
- * produced before anything writes the CV. With `realCompose` the real writing
- * stage runs as well.
+ * `compose` stage that a test controls. By default a `compose` job is held,
+ * so a test can look at what the reading stage and the answers produced
+ * before anything writes the CV. With `realCompose` the real writing stage
+ * runs as well.
  */
 export async function createGenerationApp(
   stub: AnthropicStub,
   options: { realCompose?: boolean } = {},
 ): Promise<GenerationApp> {
+  const held: ((commit: JobCommit) => void)[] = [];
   const compose: GenerationApp['compose'] = {
     handler: options.realCompose
       ? (job) => app.get(ComposeStage).run(job)
-      : () => new Promise<JobCommit>(() => undefined),
+      : () => new Promise<JobCommit>((resolve) => held.push(resolve)),
   };
   const app: INestApplication<App> = await createTestApp({
     anthropicUrl: stub.url,
@@ -39,7 +47,12 @@ export async function createGenerationApp(
       compose: (job) => compose.handler(job),
     },
   });
-  return { app, compose };
+  const releaseHeldJobs = () => {
+    for (const resolve of held.splice(0)) {
+      resolve(() => Promise.resolve());
+    }
+  };
+  return { app, compose, releaseHeldJobs };
 }
 
 export async function readCv(app: INestApplication<App>, cookie: string, id: string): Promise<Cv> {

@@ -104,3 +104,17 @@ export interface SubmittedAnswer {
 export interface SubmitAnswersRequest {
   answers: SubmittedAnswer[];
 }
+
+/** Body of `PUT /api/cvs/:id`. */
+export interface SaveCvRequest {
+  /** The version the edit was based on, as last read. */
+  version: number;
+  document: CvDocument;
+}
+
+/** Response of `PUT /api/cvs/:id`. */
+export interface SaveCvResponse {
+  /** The new version, to base the next save on. */
+  version: number;
+  updatedAt: string;
+}
