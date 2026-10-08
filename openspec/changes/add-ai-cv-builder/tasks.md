@@ -50,13 +50,13 @@
 
 ## 8. Web application
 
-- [ ] 8.0 Load the `modern-web-guidance` skill and note in the group's commit body which of its recommendations shaped the markup, CSS and client code; verify the skill was consulted before the first component is written
-- [ ] 8.1 Scaffold the Vite React app with the `/api` proxy, the router, TanStack Query, a typed API client and services, design tokens and the shared components (button, text field, text area, page shell, notice); verify the app builds and a request through the proxy reaches the API
-- [ ] 8.2 Implement the sign-up and sign-in pages, sign-out and the redirect of unauthenticated visitors; verify manually registration, an existing email, a wrong password and a reload that keeps the session
-- [ ] 8.3 Implement the CV list and the creation page (PDF or text, target role, client-side limits, server errors shown next to the field); verify manually both source kinds, each rejection and the "generation already running" message
-- [ ] 8.4 Implement the CV page for the generating, waiting and failed states: polled progress with stage names, the questions form with answer or skip per question and drafts kept across a reload, the failure reason and the retry button; verify manually that a reload at every point shows the same state and loses nothing
-- [ ] 8.5 Implement the editor for the ready state: every field, adding and removing entries and bullets, the unsaved-changes indicator and leave warning, saving with the version, the conflict message with "load the current version", the notice about omitted items, download with save-first, and deletion; verify manually every scenario of "Manual editing", "Version-checked saving" with two browser windows, "Unsaved changes" and "Download with unsaved changes"
-- [ ] 8.6 Check every screen at 360 and 1440 pixels and with keyboard only; verify there is no horizontal scrolling at 360 and every action can be completed by touch-sized targets
+- [x] 8.0 Load the `modern-web-guidance` skill and note in the group's commit body which of its recommendations shaped the markup, CSS and client code; verify the skill was consulted before the first component is written
+- [x] 8.1 Scaffold the Vite React app with the `/api` proxy, the router, TanStack Query, a typed API client and services, design tokens and the shared components (button, text field, text area, page shell, notice); verify the app builds and a request through the proxy reaches the API
+- [x] 8.2 Implement the sign-up and sign-in pages, sign-out and the redirect of unauthenticated visitors; verify manually registration, an existing email, a wrong password and a reload that keeps the session
+- [x] 8.3 Implement the CV list and the creation page (PDF or text, target role, client-side limits, server errors shown next to the field); verify manually both source kinds, each rejection and the "generation already running" message
+- [x] 8.4 Implement the CV page for the generating, waiting and failed states: polled progress with stage names, the questions form with answer or skip per question and drafts kept across a reload, the failure reason and the retry button; verify manually that a reload at every point shows the same state and loses nothing
+- [x] 8.5 Implement the editor for the ready state: every field, adding and removing entries and bullets, the unsaved-changes indicator and leave warning, saving with the version, the conflict message with "load the current version", the notice about omitted items, download with save-first, and deletion; verify manually every scenario of "Manual editing", "Version-checked saving" with two browser windows, "Unsaved changes" and "Download with unsaved changes"
+- [x] 8.6 Check every screen at 360 and 1440 pixels and with keyboard only; verify there is no horizontal scrolling at 360 and every action can be completed by touch-sized targets
 
 ## 9. Delivery
 

@@ -198,7 +198,7 @@ The editor is a form and has no separate HTML imitation of the page: the preview
 
 ### Web application
 
-Routes: `/sign-in`, `/sign-up`, `/` (the user's CVs), `/new`, `/cvs/:id`. The last one renders by state — progress, questions, editor or failure — from the one polled resource, which is what makes a reload harmless. TanStack Query does the polling and caching, react-hook-form with zod the forms. Answers typed but not yet submitted are kept in `sessionStorage` per CV, so a reload on the questions screen does not lose them either. Layout is mobile-first with CSS Modules and a small set of tokens.
+Routes: `/sign-in`, `/sign-up`, `/` (the user's CVs), `/new`, `/cvs/:id`. The last one renders by state — progress, questions, editor or failure — from the one polled resource, which is what makes a reload harmless. TanStack Query does the polling and caching. The forms are plain controlled React forms that lean on the browser's own validation (required, type, length) and on the API's messages; a form library and a second copy of the schema would add more code than these few forms need. The editor keeps the document in state, compares it with the last saved one to know whether there are unsaved changes, and tidies it (trimmed text, no empty list items) before saving. Unsaved changes are guarded twice: the browser asks before a reload or a closed tab, and a native dialog asks before moving to another page of the application. Answers typed but not yet submitted are kept in `sessionStorage` per CV, so a reload on the questions screen does not lose them either. Layout is mobile-first with CSS Modules and a small set of tokens.
 
 ### Testing
 

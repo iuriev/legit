@@ -1,0 +1,49 @@
+.field {
+  display: grid;
+  /* The label sits closer to its control than fields sit to each other. */
+  gap: var(--space-1);
+}
+
+.label {
+  font-weight: 600;
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+.control {
+  inline-size: 100%;
+  box-sizing: border-box;
+  min-block-size: var(--tap-target);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  /* At least 1rem, so that iOS does not zoom in on focus. */
+  font-size: var(--text-body);
+
+  &:user-invalid,
+  &[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+}
+
+textarea.control {
+  resize: vertical;
+  line-height: 1.5;
+  /* Where the browser supports it, the box grows with its text instead of scrolling inside. */
+  field-sizing: content;
+  min-block-size: 4.5rem;
+  max-block-size: 60dvh;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--text-small);
+
+  &:empty {
+    display: none;
+  }
+}

@@ -1,0 +1,30 @@
+.dialog {
+  inline-size: min(28rem, calc(100vw - 2 * var(--space-4)));
+  box-sizing: border-box;
+  margin: auto;
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+
+  &[open] {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  &::backdrop {
+    background: oklch(20% 0.02 250 / 55%);
+  }
+}
+
+.body {
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}

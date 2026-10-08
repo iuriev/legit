@@ -1,0 +1,30 @@
+.notice {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-inline-start-width: 0.25rem;
+  border-radius: var(--radius);
+
+  & ul {
+    padding-inline-start: var(--space-5);
+  }
+}
+
+.info {
+  background: var(--color-info-surface);
+  border-inline-start-color: var(--color-accent);
+}
+
+.success {
+  background: var(--color-success-surface);
+}
+
+.warning {
+  background: var(--color-warning-surface);
+}
+
+.error {
+  background: var(--color-danger-surface);
+  border-inline-start-color: var(--color-danger);
+}

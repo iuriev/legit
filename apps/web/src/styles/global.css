@@ -1,0 +1,139 @@
+/*
+ * Global styles: the order of the layers, the design tokens and the defaults
+ * of plain elements. Components style themselves in CSS Modules, which are
+ * not layered and therefore win over everything here.
+ */
+@layer reset, base;
+
+:root {
+  /* Colours, each in a light and a dark value. */
+  --color-canvas: light-dark(oklch(98.5% 0.003 250), oklch(18% 0.01 250));
+  --color-surface: light-dark(white, oklch(23% 0.012 250));
+  --color-text: light-dark(oklch(22% 0.02 250), oklch(93% 0.01 250));
+  --color-text-muted: light-dark(oklch(45% 0.02 250), oklch(72% 0.015 250));
+  --color-border: light-dark(oklch(82% 0.01 250), oklch(40% 0.015 250));
+  /* The edge of a control must stand out from its surroundings (3:1). */
+  --color-control-border: light-dark(oklch(56% 0.02 250), oklch(64% 0.02 250));
+  --color-accent: light-dark(oklch(45% 0.17 255), oklch(75% 0.13 255));
+  --color-accent-hover: light-dark(oklch(38% 0.17 255), oklch(82% 0.11 255));
+  --color-on-accent: light-dark(white, oklch(18% 0.03 255));
+  --color-danger: light-dark(oklch(48% 0.19 27), oklch(74% 0.15 27));
+  --color-danger-surface: light-dark(oklch(96% 0.025 27), oklch(28% 0.05 27));
+  --color-warning-surface: light-dark(oklch(96% 0.05 90), oklch(30% 0.05 90));
+  --color-success-surface: light-dark(oklch(95% 0.04 150), oklch(28% 0.05 150));
+  --color-info-surface: light-dark(oklch(95.5% 0.02 255), oklch(27% 0.035 255));
+
+  /* Space, on a scale of quarter rems. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius: 0.5rem;
+  --border-width: 1px;
+  --focus-ring: 3px solid var(--color-accent);
+
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-small: 0.875rem;
+  --text-body: 1rem;
+  --text-large: 1.25rem;
+  --text-title: clamp(1.5rem, 1.2rem + 1.5vw, 2rem);
+
+  /* The smallest comfortable target for a finger. */
+  --tap-target: 3rem;
+  --content-width: 44rem;
+
+  color-scheme: light dark;
+  accent-color: var(--color-accent);
+  /* A field brought into view by the keyboard stays clear of the bar at the foot of the editor. */
+  scroll-padding-block-end: 8rem;
+}
+
+@layer reset {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body,
+  h1,
+  h2,
+  h3,
+  p,
+  ul,
+  ol,
+  fieldset,
+  legend,
+  dialog {
+    margin: 0;
+    padding: 0;
+  }
+
+  fieldset {
+    border: 0;
+    min-inline-size: 0;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+}
+
+@layer base {
+  body {
+    min-block-size: 100dvh;
+    background: var(--color-canvas);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  h1 {
+    font-size: var(--text-title);
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: var(--text-large);
+    line-height: 1.3;
+  }
+
+  a:any-link {
+    color: var(--color-accent);
+    text-underline-offset: 0.15em;
+  }
+
+  :where(a:any-link, button, input, textarea, summary):focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :where(*, *::before, *::after) {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Present for assistive technology, absent from the screen. */
+.visually-hidden {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}

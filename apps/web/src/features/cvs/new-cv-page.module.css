@@ -1,0 +1,80 @@
+.form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.source {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.legend {
+  font-weight: 600;
+  margin-block-end: var(--space-2);
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--tap-target);
+
+  & input {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
+}
+
+.file {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.fileLabel {
+  font-weight: 600;
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+.fileInput {
+  max-inline-size: 100%;
+  min-block-size: var(--tap-target);
+  font-size: var(--text-body);
+
+  &::file-selector-button {
+    min-block-size: var(--tap-target);
+    margin-inline-end: var(--space-3);
+    padding-inline: var(--space-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--text-small);
+
+  &:empty {
+    display: none;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

@@ -1,0 +1,52 @@
+.progress {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.stages {
+  display: grid;
+  list-style: none;
+  gap: var(--space-3);
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+
+  &[data-status='current'] {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+}
+
+.marker {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  box-sizing: border-box;
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+
+  [data-status='done'] > & {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+  }
+
+  [data-status='current'] > & {
+    border-color: var(--color-accent);
+    border-block-start-color: transparent;
+    animation: spin 0.9s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+.note {
+  color: var(--color-text-muted);
+}
