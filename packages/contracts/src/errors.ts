@@ -20,7 +20,9 @@ export type ApiErrorCode =
   | 'invalid_source'
   | 'generation_running'
   | 'cv_limit_reached'
-  | 'not_retryable';
+  | 'not_retryable'
+  | 'invalid_answers'
+  | 'invalid_state';
 
 /** The body of every error response of the API. */
 export interface ApiErrorBody {

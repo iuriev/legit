@@ -49,7 +49,8 @@ export type CvFailureCode =
   | 'ai_not_configured'
   | 'declined'
   | 'no_readable_text'
-  | 'source_too_long';
+  | 'source_too_long'
+  | 'request_rejected';
 
 export interface CvFailure {
   code: CvFailureCode;
@@ -91,4 +92,15 @@ export interface Cv extends CvSummary {
 /** Response of `POST /api/cvs`. The request is multipart: `targetRole` and either `file` or `text`. */
 export interface CreateCvResponse {
   id: string;
+}
+
+export interface SubmittedAnswer {
+  questionId: string;
+  /** The answer, or null to skip the question. */
+  answer: string | null;
+}
+
+/** Body of `POST /api/cvs/:id/answers`: one entry for every question of the CV. */
+export interface SubmitAnswersRequest {
+  answers: SubmittedAnswer[];
 }

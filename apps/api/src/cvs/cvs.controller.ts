@@ -19,6 +19,7 @@ import type { SessionUser } from '../auth/session';
 import { ApiException } from '../common/api.exception';
 import { type CvSourceInput, CvsService } from './cvs.service';
 import { CreateCvDto } from './dto/create-cv.dto';
+import { SubmitAnswersDto } from './dto/submit-answers.dto';
 import { SourceUploadInterceptor } from './source-upload.interceptor';
 
 /** A malformed identifier names no CV, so it gets the same answer as an unknown one. */
@@ -63,6 +64,16 @@ export class CvsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@CurrentUser() user: SessionUser, @CvId() id: string): Promise<void> {
     return this.cvsService.delete(user.id, id);
+  }
+
+  @Post(':id/answers')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  answer(
+    @CurrentUser() user: SessionUser,
+    @CvId() id: string,
+    @Body() body: SubmitAnswersDto,
+  ): Promise<void> {
+    return this.cvsService.answer(user.id, id, body.answers);
   }
 
   @Post(':id/retry')

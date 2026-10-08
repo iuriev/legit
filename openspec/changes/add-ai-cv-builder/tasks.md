@@ -31,10 +31,10 @@
 
 ## 5. Reading the source and asking questions
 
-- [ ] 5.1 Load the `claude-api` skill, add the Anthropic client module (model, timeout, retries, effort from config, `stop_reason` handling) and the scriptable stub server for tests; verify a test call through the stub returns the scripted response and that a refusal and a cut-off response raise the typed errors
-- [ ] 5.2 Implement stage 1: build the document block (base64 PDF, or line blocks for pasted text) with citations enabled, check the token budget, and turn the response into deduplicated facts; verify with unit tests that only cited passages become facts and with an e2e test that a response without citations fails the CV with `no_readable_text`
-- [ ] 5.3 Implement stage 2: the structured questions call, validation, the limit of eight, the transition to `awaiting_answers` or straight to `compose`, and deletion of the source; verify with e2e tests for both scenarios of "Clarifying questions" and for "Removing the source after use"
-- [ ] 5.4 Implement `POST /api/cvs/:id/answers` (an entry for every open question, answers stored as facts, conditional state change, `compose` job queued); verify with e2e tests for the three scenarios of "Answers become facts" and for a second user getting 404
+- [x] 5.1 Load the `claude-api` skill, add the Anthropic client module (model, timeout, retries, effort from config, `stop_reason` handling) and the scriptable stub server for tests; verify a test call through the stub returns the scripted response and that a refusal and a cut-off response raise the typed errors
+- [x] 5.2 Implement stage 1: build the document block (base64 PDF, or line blocks for pasted text) with citations enabled, check the token budget, and turn the response into deduplicated facts; verify with unit tests that only cited passages become facts and with an e2e test that a response without citations fails the CV with `no_readable_text`
+- [x] 5.3 Implement stage 2: the structured questions call, validation, the limit of eight, the transition to `awaiting_answers` or straight to `compose`, and deletion of the source; verify with e2e tests for both scenarios of "Clarifying questions" and for "Removing the source after use"
+- [x] 5.4 Implement `POST /api/cvs/:id/answers` (an entry for every open question, answers stored as facts, conditional state change, `compose` job queued); verify with e2e tests for the three scenarios of "Answers become facts" and for a second user getting 404
 
 ## 6. Writing and checking the CV
 

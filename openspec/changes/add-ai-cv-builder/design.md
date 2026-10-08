@@ -87,7 +87,7 @@ generation_jobs  id uuid PK, cv_id FK ON DELETE CASCADE,
 
 ### Generation as a database-backed job
 
-`POST /api/cvs` stores the CV, its source and an `extract` job in one transaction and answers `201` with the identifier. A poller in the API claims work with one statement:
+`POST /api/cvs` stores the CV, its source and an `extract` job in one transaction and answers `201` with the identifier. A partial unique index on `cvs (user_id) WHERE state = 'generating'` enforces one running generation per user, and an account keeps at most five CVs, which bounds what it can store. A poller in the API claims work with one statement:
 
 ```sql
 UPDATE generation_jobs SET status = 'running', attempts = attempts + 1,
@@ -102,6 +102,8 @@ RETURNING *;
 
 - The lease (`locked_until`) is the recovery mechanism: a job whose process died stays `running` with an expired lease and is claimed again. Nothing has to notice the crash. The lease is longer than the worst case of one attempt (two model calls with the SDK's own retries and timeouts).
 - A stage writes its results and its next state in one transaction at the end, so an attempt that is interrupted leaves nothing half-written and is safe to run again.
+- Every write a worker makes for a job checks the attempt number it claimed with, so a worker that was only slow, and has been replaced, cannot overwrite its replacement's work. Transactions that touch a CV and its job lock the CV row first, the order a delete takes through the foreign key, so a delete during a commit waits instead of deadlocking.
+- A stopping worker waits a few seconds for running jobs and hands the rest back to the queue without counting the attempt, so a restart resumes them at once rather than after the lease.
 - Transient failures re-queue the job with a delay (5 s, then 30 s) until three attempts have been made; then the job and the CV become `failed`. Failures that a retry cannot fix fail at once. The classification is one function over the SDK's typed errors and our own error types:
 
 | Cause | Class | Failure code shown to the user |
@@ -111,8 +113,10 @@ RETURNING *;
 | 401 or 403 from the API | permanent | `ai_not_configured` |
 | `stop_reason: "refusal"` | permanent | `declined` |
 | No quoted passage in the extraction | permanent | `no_readable_text` |
-| Source exceeds the input token budget | permanent | `source_too_long` |
-| Other 4xx | permanent | `generation_failed` |
+| Source exceeds the input token budget, or the reading is cut off | permanent | `source_too_long` |
+| Other 4xx (for example a PDF the service cannot open) | permanent | `request_rejected` |
+
+  A failure that a retry cannot fix also deletes the stored source, which nothing will read again.
 
 - The client polls `GET /api/cvs/:id` every 1.5 s while the state is `generating`. Because the page reads everything from that endpoint, a reload or another device shows the same thing.
 
@@ -152,11 +156,14 @@ Alternatives considered: one call that returns the CV and the questions from the
 ### Calling the Anthropic API
 
 - The official SDK `@anthropic-ai/sdk`, one thin module that owns every call. Model `claude-sonnet-5-5`, configurable through `ANTHROPIC_MODEL`.
-- Structured calls use `output_config.format` with a JSON schema and are validated again on our side with the same zod schemas that define the contract types. The model's guarantee of schema-valid output is not treated as a reason to skip validation.
+- Structured calls use `output_config.format` with a JSON schema built by the SDK's zod helper, and are validated on our side with the same zod schema. Ours is the validation that counts: the helper passes length limits and enumerations to the API as descriptions only.
 - Each response's `stop_reason` is checked before its content is read: `refusal` and `max_tokens` are failures, never content.
-- `effort` is set explicitly per call (low for reading and asking, medium for writing) to keep generation time down; thinking stays adaptive.
-- The SDK's timeout and retry count are set explicitly, so the worst case of one attempt is known and stays below the job lease.
-- The document and the answers are data. The system prompts say so, but the defence does not rest on that: the writer never sees the document, and nothing it writes enters the CV without passing stage 4.
+- `effort` is set explicitly per call (low for reading and asking, medium for writing) to keep generation time down, and thinking is set to adaptive.
+- The SDK's timeout is set explicitly and its own retries are switched off. A failed call fails the stage, and the job runner decides whether the stage runs again. One layer of retries keeps the worst case of an attempt easy to state (a token count and two messages, each within the timeout), and the configuration is refused at startup unless that fits into the job lease.
+- The API's server-side refusal fallback is not enabled. A CV is an unlikely subject for a refusal, a fallback would mean a second model whose output we have not looked at, and a refusal already ends in a state the user understands (`declined`).
+- Without an API key the API still starts, and every generation fails with `ai_not_configured` before anything is sent. That is easier to diagnose than a container that will not start; `docker-compose.yml` is where the key is required.
+- The document and the answers are data, and the system prompts say so. Text from outside reaches a later call only as JSON string values, one plain line each, so it cannot close the structure around it or pass for another fact. What this does not remove: a sentence in the source that addresses the model is itself a passage the reader may quote, and it then reaches the writer as a fact like any other. Whether the writer acts on it rests on the writer's prompt, since stage 4 checks references, numbers and contact values, not meaning. That residual risk is stated in the README and probed with a real model in the integration check.
+- Questions written by the model are shown to the user, so they are bounded as well: at most eight, one of the five sections, at most 300 characters, one plain line, no links. One that does not fit is dropped rather than failing the stage.
 
 ### Authentication
 
@@ -204,7 +211,3 @@ Routes: `/sign-in`, `/sign-up`, `/` (the user's CVs), `/new`, `/cvs/:id`. The la
 - [Polling every 1.5 s per open CV] → Negligible at this scale; the endpoint is one indexed read.
 - [A transient-failure retry repeats a paid model call] → At most three attempts per stage, and the token budget caps each call.
 - [The session cannot be revoked before it expires] → Accepted for a test task; recorded in the README.
-
-## Open Questions
-
-- Whether to enable the API's server-side refusal fallback for Sonnet 5.5 calls. It needs the beta endpoint, whose compatibility with citations is to be confirmed against the SDK reference during implementation. Either way a refusal ends as the `declined` failure, so the specs and tasks do not depend on the answer.

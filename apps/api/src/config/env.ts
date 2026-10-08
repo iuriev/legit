@@ -5,9 +5,11 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
   Matches,
   Max,
   Min,
+  MinLength,
   validateSync,
 } from 'class-validator';
 
@@ -66,6 +68,40 @@ export class Env {
   @Min(1)
   AUTH_RATE_LIMIT_PER_MINUTE = 10;
 
+  /**
+   * The only secret. Without it the API starts and every generation fails with
+   * the reason "not configured", which is easier to diagnose than a crash loop.
+   */
+  @Transform(({ value }: { value: unknown }) => (value === '' ? undefined : value))
+  @IsOptional()
+  @IsString()
+  ANTHROPIC_API_KEY?: string;
+
+  /** Every model call uses this model. */
+  @IsString()
+  @MinLength(1)
+  ANTHROPIC_MODEL = 'claude-sonnet-5-5';
+
+  /** Points the SDK at another address, such as a stub of the API in a test setup. */
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  ANTHROPIC_BASE_URL?: string;
+
+  /**
+   * How long one request to the model service may take. A stage makes up to
+   * three in a row, and together they must fit into WORKER_LEASE_SECONDS.
+   */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  LLM_TIMEOUT_MS = 180_000;
+
+  /** The largest source the reading stage sends to the model, in input tokens. */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  LLM_INPUT_TOKEN_BUDGET = 40_000;
+
   /** How often the worker looks for a waiting generation job. */
   @Type(() => Number)
   @IsInt()
@@ -113,12 +149,22 @@ export class Env {
   WORKER_SHUTDOWN_GRACE_MS = 5000;
 }
 
+/** The most requests one stage sends to the model service: a token count and two messages. */
+const REQUESTS_PER_STAGE = 3;
+
 export function validateEnv(raw: Record<string, unknown>): Env {
   const env = plainToInstance(Env, raw, { exposeDefaultValues: true });
   const errors = validateSync(env, { skipMissingProperties: false });
   if (errors.length > 0) {
     const details = errors.flatMap((error) => Object.values(error.constraints ?? {})).join('; ');
     throw new Error(`Invalid environment: ${details}`);
+  }
+  // A stage that outlives its lease is claimed by a second worker while the
+  // first is still running it.
+  if (REQUESTS_PER_STAGE * env.LLM_TIMEOUT_MS >= env.WORKER_LEASE_SECONDS * 1000) {
+    throw new Error(
+      `Invalid environment: WORKER_LEASE_SECONDS must exceed ${String(REQUESTS_PER_STAGE)} times LLM_TIMEOUT_MS`,
+    );
   }
   return env;
 }

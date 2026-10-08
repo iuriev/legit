@@ -45,4 +45,20 @@ describe('validateEnv', () => {
       /WORKER_RETRY_DELAYS_MS/,
     );
   });
+
+  it('treats an empty API key as no key', () => {
+    expect(validateEnv({ ...valid, ANTHROPIC_API_KEY: '' }).ANTHROPIC_API_KEY).toBeUndefined();
+    expect(validateEnv({ ...valid, ANTHROPIC_API_KEY: 'sk-test' }).ANTHROPIC_API_KEY).toBe(
+      'sk-test',
+    );
+  });
+
+  it('requires the job lease to outlast the requests of one stage', () => {
+    expect(() =>
+      validateEnv({ ...valid, LLM_TIMEOUT_MS: '200000', WORKER_LEASE_SECONDS: '600' }),
+    ).toThrow(/WORKER_LEASE_SECONDS/);
+    expect(
+      validateEnv({ ...valid, LLM_TIMEOUT_MS: '100000', WORKER_LEASE_SECONDS: '301' }),
+    ).toBeDefined();
+  });
 });

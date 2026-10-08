@@ -15,6 +15,8 @@ const MESSAGES: Record<CvFailureCode, string> = {
   no_readable_text:
     'We could not read any text in this file. If it is a scan, paste the text of your CV instead.',
   source_too_long: 'This document is too long to process. Shorten it and start again.',
+  request_rejected:
+    'The AI service could not process this request. If you uploaded a PDF, check that it opens without a password, or paste the text instead.',
 };
 
 export function describeFailure(code: CvFailureCode): CvFailure {

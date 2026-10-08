@@ -1,4 +1,10 @@
-import type { Cv as CvResponse, CvFailureCode, CvStage, CvSummary } from '@cv-builder/contracts';
+import type {
+  Cv as CvResponse,
+  CvFailureCode,
+  CvStage,
+  CvSummary,
+  SubmittedAnswer,
+} from '@cv-builder/contracts';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
@@ -122,6 +128,85 @@ export class CvsService {
   }
 
   /**
+   * Takes the answers to all questions of a CV at once and queues the writing
+   * of the CV. An answer becomes a fact attributed to the user; a skipped
+   * question adds nothing and is not asked again.
+   *
+   * The state change comes first and is conditional, so of two submissions
+   * only one gets past it, and everything after it rolls back on any error.
+   */
+  async answer(userId: string, id: string, answers: SubmittedAnswer[]): Promise<void> {
+    try {
+      await this.dataSource.transaction(async (manager) => {
+        const [moved] = await manager.query<[{ id: string }[], number]>(
+          `UPDATE "cvs"
+              SET "state" = 'generating', "stage" = $3, "updated_at" = now()
+            WHERE "id" = $1 AND "user_id" = $2 AND "state" = 'awaiting_answers'
+            RETURNING "id"`,
+          [id, userId, FIRST_STAGE.compose],
+        );
+        if (moved.length === 0) {
+          const cv = await manager.getRepository(Cv).findOneBy({ id, userId });
+          if (!cv) {
+            throw notFound();
+          }
+          throw new ApiException(
+            HttpStatus.CONFLICT,
+            'invalid_state',
+            'This CV is not waiting for answers.',
+          );
+        }
+
+        const open = await manager
+          .getRepository(Question)
+          .find({ where: { cvId: id, status: 'open' }, order: { position: 'ASC' } });
+        const byQuestion = new Map(answers.map((entry) => [entry.questionId, entry.answer]));
+        const complete =
+          byQuestion.size === answers.length &&
+          byQuestion.size === open.length &&
+          open.every((question) => byQuestion.has(question.id));
+        if (!complete) {
+          throw invalidAnswers();
+        }
+
+        const [last] = await manager.query<{ ref: number }[]>(
+          `SELECT coalesce(max("ref"), 0) AS "ref" FROM "facts" WHERE "cv_id" = $1`,
+          [id],
+        );
+        let ref = last?.ref ?? 0;
+        for (const question of open) {
+          const answer = byQuestion.get(question.id) ?? null;
+          if (answer === null) {
+            await manager.query(`UPDATE "questions" SET "status" = 'skipped' WHERE "id" = $1`, [
+              question.id,
+            ]);
+            continue;
+          }
+          await manager.query(
+            `UPDATE "questions" SET "status" = 'answered', "answer" = $2 WHERE "id" = $1`,
+            [question.id, answer],
+          );
+          ref += 1;
+          await manager.query(
+            `INSERT INTO "facts" ("cv_id", "ref", "origin", "quote", "question_id")
+             VALUES ($1, $2, 'answer', $3, $4)`,
+            [id, ref, answer, question.id],
+          );
+        }
+        await manager.query(
+          `INSERT INTO "generation_jobs" ("cv_id", "kind") VALUES ($1, 'compose')`,
+          [id],
+        );
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw generationRunning();
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Restarts a failed generation from the stage that failed. The state change
    * is one conditional statement, so two retries cannot both queue a job.
    */
@@ -172,6 +257,13 @@ export class CvsService {
 }
 
 const notFound = () => new NotFoundException('CV not found');
+
+const invalidAnswers = () =>
+  new ApiException(
+    HttpStatus.BAD_REQUEST,
+    'invalid_answers',
+    'Send one entry, an answer or a skip, for every question of this CV.',
+  );
 
 function toSummary(cv: Cv): CvSummary {
   return {

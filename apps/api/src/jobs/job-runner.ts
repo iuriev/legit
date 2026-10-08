@@ -199,6 +199,10 @@ export class JobRunner implements OnApplicationBootstrap, OnApplicationShutdown 
       }
       await this.handleFailure(job, error).catch((failure: unknown) => {
         // The job stays `running`; its lease will run out and it will be claimed again.
+        if (this.timer === undefined) {
+          // Expected while stopping: the database connection is already closed.
+          return;
+        }
         this.logger.error(failure instanceof Error ? failure.stack : failure);
       });
     }
