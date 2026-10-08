@@ -5,7 +5,7 @@ import { cvDocumentSchema } from '../cvs/cv-document.schema';
 import { GenerationError } from '../jobs/generation-error';
 import type { ClaimedJob, JobCommit } from '../jobs/job-handlers';
 import { LlmClient } from '../llm/llm.client';
-import { type CheckableFact, checkDraft, isEmptyDocument } from './checks';
+import { type CheckableFact, checkDraft, countItems, isEmptyDocument } from './checks';
 import { type CvDraft, draftSchema } from './draft';
 import { REWRITE_INSTRUCTION, WRITE_SYSTEM, type WriterFact, writeUserMessage } from './prompts';
 
@@ -49,7 +49,10 @@ export class ComposeStage {
 
     await this.showStage(job.cvId, 'checking');
     let checked = checkDraft(draft, checkable);
-    if (checked.rejected.length > 0) {
+    // What the writer first meant to say: the items that passed and the ones that did not.
+    const intended = countItems(checked.document) + checked.rejected.length;
+    const rewrote = checked.rejected.length > 0;
+    if (rewrote) {
       const rewritten = await this.write(
         `${WRITE_SYSTEM}\n\n${REWRITE_INSTRUCTION}`,
         writeUserMessage(targetRole, writerFacts, {
@@ -73,7 +76,11 @@ export class ComposeStage {
         'Nothing in the draft passed the checks',
       );
     }
-    const omitted = checked.rejected.length;
+    // After a rewrite, an item is missing whether the check refused it again
+    // or the writer took it out: either way the owner should hear of it.
+    const omitted = rewrote
+      ? Math.max(checked.rejected.length, intended - countItems(document.data))
+      : 0;
 
     return async (manager) => {
       await manager.query(

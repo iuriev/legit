@@ -81,6 +81,22 @@ describe('passagesFromMessage', () => {
     expect(passagesFromMessage(response(...many))).toHaveLength(MAX_PASSAGES);
   });
 
+  it('makes each line of a quoted passage a passage of its own', () => {
+    // What the API returns for a PDF whose page it cites as one piece of text.
+    const page =
+      'Dmytro Bondarenko\r\nOdesa · +380 (63) 777-88-\r\n99 · dribbble.com/d\r\n\r\nManaged a team of 3 designers\nRan 40 usability interviews';
+
+    const passages = passagesFromMessage(response(statement('Everything.', onPage(1, page))));
+
+    expect(passages).toEqual([
+      { quote: 'Dmytro Bondarenko', page: 1 },
+      { quote: 'Odesa · +380 (63) 777-88-', page: 1 },
+      { quote: '99 · dribbble.com/d', page: 1 },
+      { quote: 'Managed a team of 3 designers', page: 1 },
+      { quote: 'Ran 40 usability interviews', page: 1 },
+    ]);
+  });
+
   it('ignores a citation that does not quote the document', () => {
     const fromElsewhere = {
       type: 'text',

@@ -311,6 +311,21 @@ describe('Writing and checking the CV (e2e)', () => {
       expect(writingRequests()).toHaveLength(1);
     });
 
+    it('counts an item that the writer quietly dropped in its rewrite', async () => {
+      const without = draft();
+      const position = without.experience[0];
+      stub.reply(
+        json(withBullet('Cut build time by 40%', [3])),
+        json(position ? { ...without, experience: [{ ...position, bullets: [] }] } : without),
+      );
+
+      const cv = await finished(await generate());
+
+      // Nothing was rejected in the second draft, yet a bullet point is gone.
+      expect(cv.document?.experience[0]?.bullets).toEqual([]);
+      expect(cv.omittedCount).toBe(1);
+    });
+
     it('includes a rejected bullet point once it is rewritten without the unsupported number', async () => {
       stub.reply(
         json(withBullet('Cut build time by 40%', [3])),
@@ -371,7 +386,9 @@ describe('Writing and checking the CV (e2e)', () => {
 
       // The second draft is checked as a whole: nothing gets in by having passed earlier.
       expect(cv.document?.skills).toEqual([]);
-      expect(cv.omittedCount).toBe(1);
+      // The first draft meant to say ten things; eight are in the CV. The count
+      // covers what the check refused and what the writer dropped.
+      expect(cv.omittedCount).toBe(2);
     });
 
     it('rejects an email address that no named fact contains', async () => {

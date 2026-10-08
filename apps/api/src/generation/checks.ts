@@ -131,14 +131,26 @@ const NUMBER_WORD = new RegExp(
 
 /**
  * Words that state a quantity and are compared as words, each with the forms
- * it takes: "millions", "multimillion", "doubled", "centuries".
+ * it takes: "millions", "multimillion", "doubled", "centuries". The words of
+ * magnitude are also read in the short forms a CV uses ("10k", "$2M") and in
+ * Ukrainian and Russian, so that "200 тисяч" in a source supports "200
+ * thousand" in the CV.
  */
 const QUANTITY_WORDS: [name: string, pattern: RegExp][] = [
   ['dozen', /\bdozens?\b/i],
   ['hundred', /\b(?:multi-?)?hundreds?\b/i],
-  ['thousand', /\b(?:multi-?)?thousands?\b/i],
-  ['million', /\b(?:multi-?)?millions?\b/i],
-  ['billion', /\b(?:multi-?)?billions?\b/i],
+  [
+    'thousand',
+    /\b(?:multi-?)?thousands?\b|(?<![\p{L}\d])\d[\d.,]*k\b|(?<!\p{L})(?:тисяч\p{L}*|тис\.|тыс\p{L}*)/iu,
+  ],
+  [
+    'million',
+    /\b(?:multi-?)?millions?\b|(?<![\p{L}\d])\d[\d.,]*M\b|(?<!\p{L})(?:мільйон\p{L}*|миллион\p{L}*|млн)/u,
+  ],
+  [
+    'billion',
+    /\b(?:multi-?)?billions?\b|(?<![\p{L}\d])\d[\d.,]*B\b|(?<!\p{L})(?:мільярд\p{L}*|миллиард\p{L}*|млрд)/u,
+  ],
   ['trillion', /\b(?:multi-?)?trillions?\b/i],
   ['decade', /\bdecades?\b/i],
   ['century', /\bcentur(?:y|ies)\b/i],
@@ -246,11 +258,12 @@ function canonicalLink(link: string): string {
 }
 
 /**
- * Phone-like runs of a fact: groups of digits with at most one space, dot or
- * hyphen between them. A longer gap ends the run, so "… 4567. 5 years" and
- * "2019 – 2022" are not read as one number.
+ * Phone-like runs of a text: groups of digits with at most one space, dot or
+ * hyphen between them, or a hyphen and a space where a line of a PDF broke. A
+ * longer gap ends the run, so "… 4567. 5 years" and "2019 – 2022" are not
+ * read as one number.
  */
-const PHONE_RUN = /\+?\(?\d+\)?(?:[ \u00a0.-]?\(?\d+\)?)*/g;
+const PHONE_RUN = /\+?\(?\d+\)?(?:(?:- |[ \u00a0.-])?\(?\d+\)?)*/g;
 const digitsOfPhone = (phone: string): string => phone.replace(/[^\d+]/g, '');
 
 type ExactKind = 'email' | 'phone' | 'link';
@@ -297,10 +310,10 @@ function isExactCopy(kind: ExactKind, value: string, quotes: string[]): boolean 
       return (
         PHONE_SHAPE.test(value) &&
         digits.replace(/\D/g, '').length >= PHONE_MIN_DIGITS &&
-        facts.some((fact) =>
-          [...readableFact(fact).matchAll(PHONE_RUN)].some(
-            (run) => digitsOfPhone(run[0]) === digits,
-          ),
+        // The named facts are read as one text, in the order named: a PDF may
+        // break a phone number across two lines, which are two facts.
+        [...facts.map(readableFact).join(' ').matchAll(PHONE_RUN)].some(
+          (run) => digitsOfPhone(run[0]) === digits,
         )
       );
     }
@@ -565,4 +578,34 @@ export function isEmptyDocument(document: CvDocument): boolean {
       (text) => text === '',
     ) && contact.links.length + experience.length + education.length + skills.length === 0
   );
+}
+
+/** How many items a CV has: every non-empty field, bullet point, skill and link. */
+export function countItems(document: CvDocument): number {
+  const { contact, summary, experience, education, skills } = document;
+  const texts = [
+    contact.fullName,
+    contact.email,
+    contact.phone,
+    contact.location,
+    ...contact.links,
+    summary,
+    ...experience.flatMap((entry) => [
+      entry.company,
+      entry.title,
+      entry.location,
+      entry.startDate,
+      entry.endDate,
+      ...entry.bullets,
+    ]),
+    ...education.flatMap((entry) => [
+      entry.institution,
+      entry.degree,
+      entry.startDate,
+      entry.endDate,
+      entry.details,
+    ]),
+    ...skills,
+  ];
+  return texts.filter((text) => text !== '').length;
 }

@@ -4,6 +4,7 @@ import { CV_LIMITS } from '../cvs/cv-document.schema';
 import {
   checkDraft,
   cleanItemText,
+  countItems,
   hasUnreadableNumber,
   isEmptyDocument,
   joinedNumbersIn,
@@ -91,6 +92,10 @@ describe('numbersIn', () => {
     // Ordinary words that only look like numbers.
     ['often attended, tenure, someone, one-on-one, scaffold', []],
     ['two-factor authentication on a three-tier system', ['2', '3']],
+    // Short forms, and the same words in Ukrainian and Russian.
+    ['10k users, $2M raised, 3B rows', ['10', '2', '3', 'thousand', 'million', 'billion']],
+    ['понад 200 тисяч клієнтів, 5 млн запитів', ['200', '5', 'thousand', 'million']],
+    ['English B2, B2B sales, 4K video', ['2', '4', 'thousand']],
   ])('reads %j as %j', (text, expected) => {
     expect([...numbersIn(text)].sort()).toEqual([...expected].sort());
   });
@@ -226,6 +231,16 @@ describe('rejectionReason', () => {
 
       expect(rejectionReason('Led 3 engineers across 25 services', [1], words)).toBeNull();
       expect(rejectionReason('Led three engineers', [1], digits)).toBeNull();
+    });
+
+    it('reads a magnitude in another language or in a short form as the same magnitude', () => {
+      const ukrainian = new Map([[1, 'яким користується понад 200 тисяч клієнтів']]);
+      const short = new Map([[1, 'Raised $2M from 10k backers']]);
+
+      expect(rejectionReason('Used by over 200 thousand clients', [1], ukrainian)).toBeNull();
+      expect(rejectionReason('Used by over 200,000 clients', [1], ukrainian)).not.toBeNull();
+      expect(rejectionReason('Raised $2 million from 10 thousand backers', [1], short)).toBeNull();
+      expect(rejectionReason('Raised $2 billion', [1], short)).not.toBeNull();
     });
 
     it('ignores grouping separators when it compares numbers', () => {
@@ -418,6 +433,19 @@ describe('rejectionReason', () => {
       expect(
         rejectionReason('+1 555 123 4567', [1], one('+1 555 123 4567 – 2019'), { exact: 'phone' }),
       ).toBeNull();
+    });
+
+    it('finds a phone number that a PDF broke across two lines, when both lines are named', () => {
+      const lines = new Map([
+        [1, 'Odesa · dmytro@example.com · +380 (63) 777-88-'],
+        [2, '99 · https://dribbble.com/dbondarenko'],
+      ]);
+
+      expect(rejectionReason('+380 (63) 777-88-99', [1, 2], lines, { exact: 'phone' })).toBeNull();
+      expect(rejectionReason('+380 (63) 777-88-99', [1], lines, { exact: 'phone' })).not.toBeNull();
+      expect(
+        rejectionReason('+380 (63) 777-88-98', [1, 2], lines, { exact: 'phone' }),
+      ).not.toBeNull();
     });
 
     it('does not glue the end of one fact to the start of the next', () => {
@@ -931,5 +959,25 @@ describe('isEmptyDocument', () => {
     expect(isEmptyDocument({ ...empty, contact: { ...empty.contact, fullName: 'Olena' } })).toBe(
       false,
     );
+  });
+});
+
+describe('countItems', () => {
+  it('counts every non-empty field, bullet point, skill and link', () => {
+    const { document } = checkDraft(
+      {
+        ...emptyDraft(),
+        summary: { text: 'Backend engineer at Acme.', facts: [2] },
+        experience: [
+          job({ location: '', bullets: [{ text: 'Cut build time by 40%', facts: [3] }] }),
+        ],
+        skills: [{ name: 'Node.js', facts: [5] }],
+      },
+      checkable,
+    );
+
+    // The summary, four fields of the position, one bullet point and one skill.
+    expect(countItems(document)).toBe(7);
+    expect(countItems(checkDraft(emptyDraft(), checkable).document)).toBe(0);
   });
 });

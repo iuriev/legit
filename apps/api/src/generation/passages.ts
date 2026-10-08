@@ -10,7 +10,7 @@ export interface Passage {
 }
 
 /** Bounds on what one source can turn into, whatever the model returns. */
-export const MAX_PASSAGES = 300;
+export const MAX_PASSAGES = 600;
 export const MAX_PASSAGE_LENGTH = 2000;
 
 type DocumentCitation =
@@ -52,6 +52,12 @@ function position(citation: DocumentCitation): number {
  * the one part of the response the model did not write. The model's own
  * sentences are dropped, and a sentence without a citation contributes
  * nothing.
+ *
+ * A quotation is split into its lines, and each line is a passage. For a PDF
+ * the API may quote a whole page as one piece of text; a fact that large would
+ * let any number on the page support any claim. A line is still the
+ * document's own text, word for word, and it is small enough for "the facts
+ * an item names" to mean something.
  */
 export function passagesFromMessage(message: Anthropic.Message): Passage[] {
   const found: (Passage & { position: number; order: number })[] = [];
@@ -65,17 +71,19 @@ export function passagesFromMessage(message: Anthropic.Message): Passage[] {
       if (!quotesTheSource(citation)) {
         continue;
       }
-      const quote = toPlainLine(citation.cited_text);
-      if (quote === '' || quote.length > MAX_PASSAGE_LENGTH || seen.has(quote)) {
-        continue;
+      for (const line of citation.cited_text.split(/\r?\n/)) {
+        const quote = toPlainLine(line);
+        if (quote === '' || quote.length > MAX_PASSAGE_LENGTH || seen.has(quote)) {
+          continue;
+        }
+        seen.add(quote);
+        found.push({
+          quote,
+          page: citation.type === 'page_location' ? citation.start_page_number : null,
+          position: position(citation),
+          order: found.length,
+        });
       }
-      seen.add(quote);
-      found.push({
-        quote,
-        page: citation.type === 'page_location' ? citation.start_page_number : null,
-        position: position(citation),
-        order: found.length,
-      });
     }
   }
 
