@@ -59,7 +59,7 @@ The system SHALL write the CV from the stored facts and the target role alone, w
 - **THEN** the bullet point is rejected
 
 ### Requirement: Numbers must come from the facts
-The system SHALL reject a generated item that contains a number — a year, a duration, a percentage, an amount or a count — that does not occur in the facts the item names. Grouping separators SHALL be ignored when numbers are compared.
+The system SHALL reject a generated item that contains a number — a year, a duration, a percentage, an amount or a count, in digits or as an English number word — that does not occur in the facts the item names. Grouping separators SHALL be ignored when numbers are compared, and a decimal SHALL be supported only by the same decimal.
 
 #### Scenario: Number present in the facts
 - **WHEN** a bullet point says "cut build time by 40%" and one of its facts contains "40%"
@@ -69,19 +69,39 @@ The system SHALL reject a generated item that contains a number — a year, a du
 - **WHEN** a bullet point says "cut build time by 40%" and none of its facts contains the number 40
 - **THEN** the bullet point is rejected
 
+#### Scenario: Number in words
+- **WHEN** the summary says "eight years of experience" and its facts contain only the years 2016 and 2024
+- **THEN** the summary is rejected, as it would be with "8 years"
+
+#### Scenario: Decimal assembled from other numbers
+- **WHEN** a bullet point says "cut build time by 40.6%" and its facts contain "40%" and "6 weeks"
+- **THEN** the bullet point is rejected, because no fact contains 40.6
+
+#### Scenario: Digits in another form
+- **WHEN** a bullet point states a number in full-width, superscript or other digits that are not 0–9
+- **THEN** the bullet point is rejected, whatever its facts contain
+
 #### Scenario: Computed number
 - **WHEN** the summary says "8 years of experience" and its facts contain only the years 2016 and 2024
 - **THEN** the summary is rejected, because 8 does not occur in the facts
 
 ### Requirement: Contact values are verbatim
-The system SHALL reject an email address, a phone number or a link that does not occur, character for character apart from spacing, in a fact the value names.
+The system SHALL reject a contact email address, phone number or link unless it is a complete address or number of a fact the item names; a part of one SHALL NOT count. Spacing, the punctuation of a phone number, and the scheme and host case of a link SHALL NOT matter. In any other item it SHALL reject an email address or a recognisable link that no named fact contains.
 
 #### Scenario: Email not in the facts
 - **WHEN** the generated contact details contain an email address that no named fact contains
 - **THEN** the email address is rejected and the CV has none
 
+#### Scenario: Part of an address
+- **WHEN** the generated email address is "ann@example.com" and the named fact contains "joann@example.com", or the generated phone number lacks the last digit of the one in the fact
+- **THEN** the value is rejected
+
+#### Scenario: Address in another field
+- **WHEN** a bullet point, a name, a place or a skill contains an email address, or a link with a scheme, a leading "www." or a path, that no fact it names contains
+- **THEN** that item is rejected
+
 ### Requirement: Handling rejected items
-The system SHALL give the model one chance to rewrite rejected items, telling it why each was rejected, and SHALL leave out of the CV any item that is rejected again. The CV SHALL record how many items were left out, and the owner SHALL be told.
+The system SHALL give the model one chance to rewrite rejected items, telling it why each was rejected, and SHALL leave out of the CV any item that is rejected again. The CV SHALL record how many items were left out, and the owner SHALL be told. When nothing at all passes, the generation SHALL fail rather than produce an empty CV.
 
 #### Scenario: Rewrite passes
 - **WHEN** a rejected bullet point is rewritten without the unsupported number
@@ -90,6 +110,10 @@ The system SHALL give the model one chance to rewrite rejected items, telling it
 #### Scenario: Rewrite fails
 - **WHEN** a bullet point is rejected again after the rewrite
 - **THEN** it is absent from the CV and the owner sees that one item was left out because it could not be verified
+
+#### Scenario: Nothing passes
+- **WHEN** every item of the draft and of its rewrite is rejected
+- **THEN** the generation is treated as a failed attempt and no empty CV is shown as ready
 
 ### Requirement: Untrusted model output
 The system SHALL treat every response of the model as untrusted input: it SHALL validate the response against the expected structure and length limits before using it, and SHALL treat a response that fails validation, is cut off or is a refusal as a failed attempt, never as content.

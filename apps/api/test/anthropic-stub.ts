@@ -58,6 +58,11 @@ export class AnthropicStub {
     this.replies.push(...replies);
   }
 
+  /** Queues replies ahead of the ones already scripted. */
+  replyFirst(...replies: StubReply[]): void {
+    this.replies.unshift(...replies);
+  }
+
   reset(): void {
     this.requests.length = 0;
     this.replies = [];

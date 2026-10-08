@@ -38,10 +38,10 @@
 
 ## 6. Writing and checking the CV
 
-- [ ] 6.1 Implement the checks of stage 4 as pure functions (references, numbers, contact values) over the draft schema; verify with unit tests for every scenario of "Writing from facts only", "Numbers must come from the facts" and "Contact values are verbatim", including grouping separators and digits inside words
-- [ ] 6.2 Implement stage 3 and the `compose` handler: the structured writing call, validation, the checks, one rewrite of rejected items, omission with `omitted_count`, and storing the document with `state = ready`; verify with e2e tests for both scenarios of "Handling rejected items", for "No fact, no content" and for malformed and cut-off responses being retried
-- [ ] 6.3 Write the system prompts for the three calls (document and answers as data, no strengthening of claims, English, concise bullets, role-aimed summary, relevance ordering, empty when unsupported); verify with an e2e test that the writing request contains the facts and the role and does not contain the source document
-- [ ] 6.4 Cover the whole generation with one e2e test through the stub: upload, progress visible during a delayed call, questions, answers, ready CV; verify it also passes when the job's lease is expired in the middle to simulate a restart
+- [x] 6.1 Implement the checks of stage 4 as pure functions (references, numbers, contact values) over the draft schema; verify with unit tests for every scenario of "Writing from facts only", "Numbers must come from the facts" and "Contact values are verbatim", including grouping separators and digits inside words
+- [x] 6.2 Implement stage 3 and the `compose` handler: the structured writing call, validation, the checks, one rewrite of rejected items, omission with `omitted_count`, and storing the document with `state = ready`; verify with e2e tests for both scenarios of "Handling rejected items", for "No fact, no content" and for malformed and cut-off responses being retried
+- [x] 6.3 Write the system prompts for the three calls (document and answers as data, no strengthening of claims, English, concise bullets, role-aimed summary, relevance ordering, empty when unsupported); verify with an e2e test that the writing request contains the facts and the role and does not contain the source document
+- [x] 6.4 Cover the whole generation with one e2e test through the stub: upload, progress visible during a delayed call, questions, answers, ready CV; verify it also passes when the job's lease is expired in the middle to simulate a restart
 
 ## 7. Editing and PDF export
 

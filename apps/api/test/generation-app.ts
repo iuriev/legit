@@ -3,6 +3,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 
+import { ComposeStage } from '../src/generation/compose.stage';
 import { ExtractStage } from '../src/generation/extract.stage';
 import type { JobCommit, JobHandler } from '../src/jobs/job-handlers';
 import { type AnthropicStub, atLine, json, reading, statement } from './anthropic-stub';
@@ -19,11 +20,17 @@ export interface GenerationApp {
  * The application with the real reading stage talking to the stub, and a
  * `compose` stage that a test controls. By default a `compose` job is left
  * running, so a test can look at what the reading stage and the answers
- * produced before anything writes the CV.
+ * produced before anything writes the CV. With `realCompose` the real writing
+ * stage runs as well.
  */
-export async function createGenerationApp(stub: AnthropicStub): Promise<GenerationApp> {
+export async function createGenerationApp(
+  stub: AnthropicStub,
+  options: { realCompose?: boolean } = {},
+): Promise<GenerationApp> {
   const compose: GenerationApp['compose'] = {
-    handler: () => new Promise<JobCommit>(() => undefined),
+    handler: options.realCompose
+      ? (job) => app.get(ComposeStage).run(job)
+      : () => new Promise<JobCommit>(() => undefined),
   };
   const app: INestApplication<App> = await createTestApp({
     anthropicUrl: stub.url,
