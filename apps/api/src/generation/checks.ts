@@ -143,14 +143,12 @@ const QUANTITY_WORDS: [name: string, pattern: RegExp][] = [
     'thousand',
     /\b(?:multi-?)?thousands?\b|(?<![\p{L}\d])\d[\d.,]*k\b|(?<!\p{L})(?:тисяч\p{L}*|тис\.|тыс\p{L}*)/iu,
   ],
-  [
-    'million',
-    /\b(?:multi-?)?millions?\b|(?<![\p{L}\d])\d[\d.,]*M\b|(?<!\p{L})(?:мільйон\p{L}*|миллион\p{L}*|млн)/u,
-  ],
-  [
-    'billion',
-    /\b(?:multi-?)?billions?\b|(?<![\p{L}\d])\d[\d.,]*B\b|(?<!\p{L})(?:мільярд\p{L}*|миллиард\p{L}*|млрд)/u,
-  ],
+  // The words in any case; the one-letter suffix only as a capital, because
+  // "5m" is five metres or minutes at least as often as five million.
+  ['million', /\b(?:multi-?)?millions?\b|(?<!\p{L})(?:мільйон\p{L}*|миллион\p{L}*|млн)/iu],
+  ['million', /(?<![\p{L}\d])\d[\d.,]*(?:M|MM|mn)\b/u],
+  ['billion', /\b(?:multi-?)?billions?\b|(?<!\p{L})(?:мільярд\p{L}*|миллиард\p{L}*|млрд)/iu],
+  ['billion', /(?<![\p{L}\d])\d[\d.,]*(?:B|bn)\b/u],
   ['trillion', /\b(?:multi-?)?trillions?\b/i],
   ['decade', /\bdecades?\b/i],
   ['century', /\bcentur(?:y|ies)\b/i],

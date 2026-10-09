@@ -9,10 +9,17 @@ export const SOURCE_PDF_MAX_BYTES = 5 * 1024 * 1024;
 const trim = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.replaceAll('\u0000', '').trim() : value;
 
-/** A text field left empty means that the source is the file. */
+/**
+ * A text field left empty means that the source is the file. A browser sends
+ * a line break of a form field as two characters; it counts as one here, as
+ * it does in the field's own counter.
+ */
 const trimOrAbsent = ({ value }: { value: unknown }): unknown => {
   const trimmed = trim({ value });
-  return trimmed === '' ? undefined : trimmed;
+  if (typeof trimmed !== 'string') {
+    return trimmed;
+  }
+  return trimmed === '' ? undefined : trimmed.replaceAll('\r\n', '\n');
 };
 
 /** The text fields of the multipart request of `POST /api/cvs`. The PDF arrives as the file `file`. */

@@ -21,9 +21,10 @@ class StaleJobError extends Error {}
  *
  * A job is claimed with a lease. A worker that dies leaves its job `running`
  * with a lease that runs out, and the job is claimed again: nothing has to
- * notice the crash. Every write a worker makes for a job checks that it still
+ * notice the crash. A worker stores the result of a job only while it still
  * holds the claim (the attempt number it claimed with), so a worker that was
- * only slow cannot overwrite the work of the one that replaced it.
+ * only slow cannot overwrite the work of the one that replaced it. The stage
+ * shown as progress is not guarded in this way: it is a label, not a result.
  *
  * Every transaction that touches both a CV and its job locks the CV row first.
  * Deleting a CV does the same through the foreign key, so the two cannot

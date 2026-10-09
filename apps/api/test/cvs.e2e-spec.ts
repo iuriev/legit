@@ -218,6 +218,13 @@ describe('CVs (e2e)', () => {
       await post().field('targetRole', ROLE).field('text', '😀'.repeat(15_000)).expect(201);
     });
 
+    it('counts a line break sent by a browser as one character', async () => {
+      // 15,000 lines of one character: 29,999 characters, and 44,998 as a browser sends them.
+      const text = Array.from({ length: 15_000 }, () => 'a').join('\r\n');
+
+      await post().field('targetRole', ROLE).field('text', text).expect(201);
+    });
+
     it('rejects a second file', async () => {
       const response = await post()
         .field('targetRole', ROLE)

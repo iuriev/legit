@@ -72,7 +72,7 @@ the screen is never blocked, and a reload — or a restart of the API in the mid
 generation — loses nothing, because the state is in the database and an abandoned job is claimed
 again when its lease runs out. A transient failure is retried twice with a pause; a failure that
 a retry cannot fix (a scanned PDF, a refusal) ends the job at once with a reason shown to the
-user. A job that lost its lease cannot write: every write checks the attempt number.
+user. A job that lost its lease cannot store its result: the write checks the attempt number.
 
 A queue with Redis would be more than this load needs; the table can be served by a second
 process later without a change of design.

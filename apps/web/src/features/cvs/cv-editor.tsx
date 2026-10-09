@@ -110,7 +110,10 @@ export function CvEditor({ cv, onDeleted }: { cv: ReadyCv; onDeleted: () => void
       link.href = url;
       link.download = name;
       link.click();
-      URL.revokeObjectURL(url);
+      // Not at once: some browsers start reading the file after the click returns.
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 60_000);
     },
   });
 

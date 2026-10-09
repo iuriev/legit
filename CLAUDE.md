@@ -79,8 +79,8 @@ carries the version the client loaded; a stale version is refused with `version_
 ### Errors
 
 Every error leaves the API as `{ statusCode, code, message }` through `common/api-exception.filter.ts`; the
-codes are the `ApiErrorCode` union in `packages/contracts`. Throw `ApiException` with a code
-rather than a bare Nest exception.
+codes are the `ApiErrorCode` union in `packages/contracts`. Throw `ApiException` when the
+client needs a specific code; a plain Nest exception gets the code of its status.
 
 ## Conventions
 

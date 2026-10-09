@@ -96,6 +96,10 @@ describe('numbersIn', () => {
     ['10k users, $2M raised, 3B rows', ['10', '2', '3', 'thousand', 'million', 'billion']],
     ['понад 200 тисяч клієнтів, 5 млн запитів', ['200', '5', 'thousand', 'million']],
     ['English B2, B2B sales, 4K video', ['2', '4', 'thousand']],
+    // A magnitude is the same word however it is capitalised or abbreviated.
+    ['5 Million users, 3 BILLION rows, 2 Мільйони', ['5', '3', '2', 'million', 'billion']],
+    ['$5bn revenue, $7MM budget, 4mn users', ['5', '7', '4', 'million', 'billion']],
+    ['a 5m cable', ['5']],
   ])('reads %j as %j', (text, expected) => {
     expect([...numbersIn(text)].sort()).toEqual([...expected].sort());
   });
@@ -231,6 +235,20 @@ describe('rejectionReason', () => {
 
       expect(rejectionReason('Led 3 engineers across 25 services', [1], words)).toBeNull();
       expect(rejectionReason('Led three engineers', [1], digits)).toBeNull();
+    });
+
+    it('rejects a magnitude the facts do not state, however it is capitalised', () => {
+      const facts = new Map([[1, 'Managed a budget of $5 for 3 users']]);
+
+      for (const text of [
+        'Managed a $5 million budget',
+        'Managed a $5 Million budget',
+        'Managed a 5 MILLION budget',
+        'Served 3 Billion users',
+        'Managed a $5bn budget',
+      ]) {
+        expect(rejectionReason(text, [1], facts)).not.toBeNull();
+      }
     });
 
     it('reads a magnitude in another language or in a short form as the same magnitude', () => {

@@ -67,10 +67,10 @@
 
 ## 10. Integration check
 
-- [ ] 10.1 Run the full flow against docker-compose with a real API key, once with a PDF and once with pasted text in a language other than English: sign up, create, answer and skip questions, edit, save, download, sign out, sign in on a second browser; verify each step matches the specs and that the downloaded PDF has selectable text
-- [ ] 10.2 Probe grounding with a real key: a source with an instruction to invent a degree, a source with no dates, a scanned PDF; verify nothing unsupported reaches the CV and the scanned PDF fails with the documented reason
-- [ ] 10.3 Run the `code-reviewer` subagent over the whole codebase and the `qa-tester` subagent over every spec scenario; verify there are no blocking findings and no failing scenarios
-- [ ] 10.4 Run `openspec validate add-ai-cv-builder --strict` together with `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e` and `pnpm build`; verify all pass
+- [x] 10.1 Run the full flow against docker-compose with a real API key, once with a PDF and once with pasted text in a language other than English: sign up, create, answer and skip questions, edit, save, download, sign out, sign in on a second browser; verify each step matches the specs and that the downloaded PDF has selectable text
+- [x] 10.2 Probe grounding with a real key: a source with an instruction to invent a degree, a source with no dates, a scanned PDF; verify nothing unsupported reaches the CV and the scanned PDF fails with the documented reason
+- [x] 10.3 Run the `code-reviewer` subagent over the whole codebase and the `qa-tester` subagent over every spec scenario; verify there are no blocking findings and no failing scenarios
+- [x] 10.4 Run `openspec validate add-ai-cv-builder --strict` together with `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e` and `pnpm build`; verify all pass
 
 ## Workflow follow-up
 

@@ -82,10 +82,10 @@ export function emptyCvDocument(): CvDocument {
   };
 }
 
-/** Validation messages that name the field, such as `experience.0.bullets.3: Too big…`. */
 /** How many problems of a document are reported. A hostile body can have hundreds of thousands. */
 const MAX_REPORTED_ISSUES = 20;
 
+/** Validation messages that name the field, such as `experience.0.bullets.3: Too big…`. */
 export function describeIssues(error: z.ZodError): string[] {
   return error.issues
     .slice(0, MAX_REPORTED_ISSUES)

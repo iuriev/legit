@@ -34,7 +34,7 @@ export function CvProgress({ stage }: { stage: CvStage | null }) {
         {STAGES[current]?.label ?? 'Working'}
       </p>
       <p className={styles.note}>
-        This usually takes under a minute. You can close this page or reload it: the work goes on,
+        This usually takes a minute or two. You can close this page or reload it: the work goes on,
         and you will find your CV here when you come back.
       </p>
     </section>
