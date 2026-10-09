@@ -41,9 +41,9 @@ pnpm typecheck
 pnpm build
 ```
 
-Neither suite needs an API key or access to the Anthropic API: the end-to-end tests run the real application
-against a scripted stub of the Anthropic API. The same commands run in GitHub Actions, together
-with a job that builds the images and starts them from nothing.
+Neither suite needs an API key or access to the Anthropic API: the end-to-end tests run the real
+application against a scripted stub of it. The same commands run in GitHub Actions, together with
+a job that builds the images and starts them from nothing.
 
 What is tested, because it is where a mistake costs most:
 
@@ -74,7 +74,8 @@ again when its lease runs out. A transient failure is retried twice with a pause
 a retry cannot fix (a scanned PDF, a refusal) ends the job at once with a reason shown to the
 user. A job that lost its lease cannot write: every write checks the attempt number.
 
-A queue with Redis would be more than this load needs; the table can be served by a second process later without a change of design.
+A queue with Redis would be more than this load needs; the table can be served by a second
+process later without a change of design.
 
 **Other decisions**
 
@@ -90,9 +91,8 @@ A queue with Redis would be more than this load needs; the table can be served b
 - _Untrusted input_: every request body is validated; the uploaded file is checked by content, not
   by name; every model answer is validated against a schema and its stop reason before use.
 
-The decisions and the alternatives considered are written out in
-the design document under [`openspec/`](openspec/), next to the behaviour specified scenario by
-scenario.
+The decisions and the alternatives considered are written out in the design document under
+[`openspec/`](openspec/), next to the behaviour specified scenario by scenario.
 
 ## How the AI is kept from inventing facts
 
@@ -110,8 +110,8 @@ invent" is a request; the pipeline below is built so that the request does not h
    skill) must name the facts it rests on.
 4. **Check.** Plain functions, no model:
    - an item that names no fact, or a fact that does not exist, is rejected;
-   - every number in an item — a year, a percentage, an amount, in digits or as an English word — must occur
-     in the facts the item names, so "8 years" computed from 2016 and 2024 is rejected;
+   - every number in an item — a year, a percentage, an amount, in digits or as an English word —
+     must occur in the facts the item names, so "8 years" computed from 2016 and 2024 is rejected;
    - an email address, a phone number or a link must be one that a named fact contains in full.
 
    Rejected items go back to the model once, with the reason. What is rejected again is left out,
@@ -157,7 +157,8 @@ Cut on purpose, and what I would do with more time:
 - **The PDF has one layout and one font family** (Latin, Cyrillic, Greek). Text in other scripts
   and emoji are not rendered.
 - **The CV is always written in English**, whatever the language of the source.
-- **Polling instead of server-sent events**: one indexed read every 1.5 seconds while a CV is being generated.
+- **Polling instead of server-sent events**: one indexed read every 1.5 seconds while a CV is
+  being generated.
 - No monitoring, no cost accounting per user beyond the limits above, no deployment.
 
 Out of scope by the brief: several templates, tailoring to a job description, OAuth, password
