@@ -103,7 +103,7 @@ RETURNING *;
 - The lease (`locked_until`) is the recovery mechanism: a job whose process died stays `running` with an expired lease and is claimed again. Nothing has to notice the crash. The lease is longer than the worst case of one attempt (two model calls with the SDK's own retries and timeouts).
 - A stage writes its results and its next state in one transaction at the end, so an attempt that is interrupted leaves nothing half-written and is safe to run again.
 - Every write a worker makes for a job checks the attempt number it claimed with, so a worker that was only slow, and has been replaced, cannot overwrite its replacement's work. Transactions that touch a CV and its job lock the CV row first, the order a delete takes through the foreign key, so a delete during a commit waits instead of deadlocking.
-- A stopping worker waits a few seconds for running jobs and hands the rest back to the queue without counting the attempt, so a restart resumes them at once rather than after the lease.
+- A stopping worker waits a few seconds for running jobs and hands the rest back to the queue without counting the attempt, so a restart resumes them at once rather than after the lease. This happens before the database connection is closed, and `docker-compose.yml` gives the container a stop grace period longer than the worker's, because a container killed earlier leaves the job to its lease.
 - Transient failures re-queue the job with a delay (5 s, then 30 s) until three attempts have been made; then the job and the CV become `failed`. Failures that a retry cannot fix fail at once. The classification is one function over the SDK's typed errors and our own error types:
 
 | Cause | Class | Failure code shown to the user |

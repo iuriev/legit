@@ -60,10 +60,10 @@
 
 ## 9. Delivery
 
-- [ ] 9.1 Add Dockerfiles for both apps, the nginx configuration and `docker-compose.yml` that starts PostgreSQL, the API and the web app and requires `ANTHROPIC_API_KEY`; verify that `docker compose up --build` on empty volumes serves the sign-in page with no extra command and that a missing key stops the start with a clear message
+- [x] 9.1 Add Dockerfiles for both apps, the nginx configuration and `docker-compose.yml` that starts PostgreSQL, the API and the web app and requires `ANTHROPIC_API_KEY`; verify that `docker compose up --build` on empty volumes serves the sign-in page with no extra command and that a missing key stops the start with a clear message
 - [ ] 9.2 Add the GitHub Actions workflow for lint, typecheck, unit tests, e2e tests and build; verify the workflow passes on the pushed branch
-- [ ] 9.3 Write the README (how to run the project and the tests, the architecture and its main decisions, how the AI is kept from inventing facts, what was simplified and what would be done with more time, how AI tools were used); verify every documented command runs as written
-- [ ] 9.4 Write `CLAUDE.md` with the commands and the architecture overview for future sessions; verify the documented commands match the root scripts
+- [x] 9.3 Write the README (how to run the project and the tests, the architecture and its main decisions, how the AI is kept from inventing facts, what was simplified and what would be done with more time, how AI tools were used); verify every documented command runs as written
+- [x] 9.4 Write `CLAUDE.md` with the commands and the architecture overview for future sessions; verify the documented commands match the root scripts
 
 ## 10. Integration check
 

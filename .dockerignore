@@ -1,0 +1,20 @@
+# Keep the build context small and free of local state.
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.github
+.husky
+.claude
+.idea
+docs
+openspec
+*.md
+
+# Tests are not part of the images, and must not be able to fail their build.
+apps/api/test
+**/*.spec.ts

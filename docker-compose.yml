@@ -1,0 +1,72 @@
+# The whole system with one command:
+#
+#   ANTHROPIC_API_KEY=sk-ant-... docker compose up --build
+#
+# (or put the key into .env next to this file), then open http://localhost:3000.
+# The database starts empty; the API creates the schema when it starts.
+name: cv-builder
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: cvbuilder
+      POSTGRES_PASSWORD: cvbuilder
+      POSTGRES_DB: cvbuilder
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cvbuilder -d cvbuilder']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  # The HTTP API and the generation worker, in one process. It is reachable
+  # only through the web container; no port is published.
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://cvbuilder:cvbuilder@postgres:5432/cvbuilder
+      # The only secret. Without it nothing can be generated, so the start stops here.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in the environment or in the .env file}
+      # Forwarding headers are believed from private addresses only: the web container.
+      TRUST_PROXY: uniquelocal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/api/health']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    # On a stop the worker waits five seconds for running generations and then
+    # hands them back to the queue, so they continue right after the restart.
+    # Stated here because the default grace period differs between Docker setups.
+    stop_grace_period: 15s
+    # A crash takes the worker down with the API; a generation it interrupted
+    # is claimed again when its lease runs out.
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '127.0.0.1:${WEB_PORT:-3000}:8080'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8080/']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

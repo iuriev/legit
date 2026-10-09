@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      # Reads the pnpm version from "packageManager" in package.json.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      # Starts a throwaway PostgreSQL with Testcontainers; Docker is preinstalled
+      # on the runner. The Anthropic API is replaced by a stub, so no key is needed.
+      - name: End-to-end tests
+        run: pnpm test:e2e
+
+      - name: Build
+        run: pnpm build
+
+  docker:
+    name: Docker images start from nothing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Refuse to start without the key
+        run: |
+          if docker compose config > /dev/null 2> error.txt; then
+            echo "docker compose accepted a missing ANTHROPIC_API_KEY" && exit 1
+          fi
+          grep -q "Set ANTHROPIC_API_KEY" error.txt
+
+      # Nothing is generated here, so a placeholder is enough to start.
+      - name: Start the system on an empty database
+        env:
+          ANTHROPIC_API_KEY: placeholder-for-ci
+        run: docker compose up --build -d --wait
+
+      - name: Serve the application and reach the API through it
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:3000/sign-in | grep -q '<div id="root">'
+          curl --fail --silent --show-error http://127.0.0.1:3000/api/health | grep -q '"ok"'
+
+      - name: Show logs on failure
+        if: failure()
+        env:
+          ANTHROPIC_API_KEY: placeholder-for-ci
+        run: docker compose logs

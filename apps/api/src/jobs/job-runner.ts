@@ -1,9 +1,9 @@
 import {
+  type BeforeApplicationShutdown,
   Inject,
   Injectable,
   Logger,
   type OnApplicationBootstrap,
-  type OnApplicationShutdown,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource, type EntityManager } from 'typeorm';
@@ -30,7 +30,7 @@ class StaleJobError extends Error {}
  * deadlock.
  */
 @Injectable()
-export class JobRunner implements OnApplicationBootstrap, OnApplicationShutdown {
+export class JobRunner implements OnApplicationBootstrap, BeforeApplicationShutdown {
   private readonly logger = new Logger(JobRunner.name);
   private readonly pollIntervalMs: number;
   private readonly leaseSeconds: number;
@@ -42,6 +42,8 @@ export class JobRunner implements OnApplicationBootstrap, OnApplicationShutdown 
 
   private timer: NodeJS.Timeout | undefined;
   private polling: Promise<void> | undefined;
+  /** Set once the grace period of a stop is over and running jobs are handed back. */
+  private stopped = false;
   private readonly active = new Map<Promise<void>, ClaimedJob>();
 
   constructor(
@@ -58,12 +60,18 @@ export class JobRunner implements OnApplicationBootstrap, OnApplicationShutdown 
   }
 
   onApplicationBootstrap(): void {
+    this.stopped = false;
     this.timer = setInterval(() => {
       this.polling ??= this.poll().finally(() => (this.polling = undefined));
     }, this.pollIntervalMs);
   }
 
-  async onApplicationShutdown(): Promise<void> {
+  /**
+   * Runs before any module's shutdown hook, so the database connection is still
+   * open: a job that finishes within the grace period can store its result, and
+   * the others can be handed back.
+   */
+  async beforeApplicationShutdown(): Promise<void> {
     await this.stop();
   }
 
@@ -84,6 +92,7 @@ export class JobRunner implements OnApplicationBootstrap, OnApplicationShutdown 
     });
     await Promise.race([Promise.allSettled([...this.active.keys()]), grace]);
     clearTimeout(graceTimer);
+    this.stopped = true;
 
     for (const job of this.active.values()) {
       await this.dataSource
@@ -197,12 +206,13 @@ export class JobRunner implements OnApplicationBootstrap, OnApplicationShutdown 
         this.logger.warn(`Job ${job.id}: the claim was lost; its result is discarded`);
         return;
       }
+      if (this.stopped) {
+        // The job was handed back, and the database connection is closing:
+        // whatever this attempt ran into is not a failure of the job.
+        return;
+      }
       await this.handleFailure(job, error).catch((failure: unknown) => {
         // The job stays `running`; its lease will run out and it will be claimed again.
-        if (this.timer === undefined) {
-          // Expected while stopping: the database connection is already closed.
-          return;
-        }
         this.logger.error(failure instanceof Error ? failure.stack : failure);
       });
     }
