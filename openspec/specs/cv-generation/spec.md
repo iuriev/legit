@@ -2,9 +2,7 @@
 
 ## Purpose
 Accepts a source document and a target role and turns them into a CV through a background job whose state is stored on the server, so that a slow generation never blocks the screen and survives a reload, a change of device, a failure and a restart.
-
 ## Requirements
-
 ### Requirement: Starting a CV
 The system SHALL create a CV from a target role and exactly one source — an uploaded PDF or pasted text — and SHALL answer at once with the new CV's identifier, before any generation has run.
 
@@ -118,3 +116,23 @@ The system SHALL delete the uploaded file or pasted text once facts have been ex
 #### Scenario: After extraction
 - **WHEN** extraction of a CV's facts has completed
 - **THEN** the original file or text is no longer stored
+
+### Requirement: A source that is not about a person
+The system SHALL decide, when it reads the source, whether the source describes a person's professional background — their work, education or skills — and SHALL NOT write a CV from a source that does not, unless the user has answered at least one question. In that case the generation SHALL fail at once, before the CV is written, with the reason that not enough information about the user was found, and SHALL NOT be offered for a manual retry.
+
+#### Scenario: A report, every question skipped
+- **WHEN** the source is a report on a university assignment, and the user skips every question
+- **THEN** the CV fails with the reason that not enough information about them was found, nothing is written, and the owner is offered to start a new CV
+
+#### Scenario: A report, nothing to ask
+- **WHEN** the source does not describe a person's background and the system has no question to ask
+- **THEN** the CV fails with the same reason without waiting for answers
+
+#### Scenario: A report, questions answered
+- **WHEN** the source does not describe a person's background and the user answers at least one question
+- **THEN** the CV is written from the facts and the answers
+
+#### Scenario: A CV, every question skipped
+- **WHEN** the source describes the user's work and education, and the user skips every question
+- **THEN** the CV is written from the source
+
