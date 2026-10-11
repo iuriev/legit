@@ -17,6 +17,8 @@ const MESSAGES: Record<CvFailureCode, string> = {
   source_too_long: 'This document is too long to process. Shorten it and start again.',
   request_rejected:
     'The AI service could not process this request. If you uploaded a PDF, check that it opens without a password, or paste the text instead.',
+  not_enough_information:
+    'We did not find enough information about your background to write a CV. Start a new one from your résumé or a description of your experience, and answer the questions we ask.',
 };
 
 export function describeFailure(code: CvFailureCode): CvFailure {

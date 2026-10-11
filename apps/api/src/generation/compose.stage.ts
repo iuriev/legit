@@ -69,11 +69,15 @@ export class ComposeStage {
       throw new GenerationError('generation_failed', true, 'The checked draft is not a valid CV');
     }
     if (isEmptyDocument(document.data)) {
-      // Better a failure the user can retry than a "ready" CV with nothing in it.
+      // Better a failure than a "ready" CV with nothing in it. A writer whose
+      // first draft is empty found nothing in the facts, and would find nothing
+      // again. One whose items were rejected may have erred, so the attempt is
+      // repeated; the reason the owner is given in the end is the same.
+      const wroteNothing = !rewrote;
       throw new GenerationError(
-        'generation_failed',
-        true,
-        'Nothing in the draft passed the checks',
+        'not_enough_information',
+        !wroteNothing,
+        wroteNothing ? 'The writer left the draft empty' : 'Nothing in the draft passed the checks',
       );
     }
     // After a rewrite, an item is missing whether the check refused it again

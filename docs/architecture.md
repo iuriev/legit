@@ -68,7 +68,8 @@ invent" is a request; the pipeline is built so that the request does not have to
 
    Rejected items go back to the model once, with the reason. What is rejected again is left out,
    and the user is told that some items could not be verified. If nothing passes, the generation
-   fails; an empty CV is never shown as ready. A section with no facts stays empty.
+   fails with the reason that not enough information was provided; an empty CV is never shown as
+   ready. A section with no facts stays empty.
 
 Text from the document and the answers is treated as data: it reaches the later calls only as
 JSON string values, and the prompts say that it is not instructions. A source that says "ignore

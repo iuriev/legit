@@ -50,7 +50,8 @@ export type CvFailureCode =
   | 'declined'
   | 'no_readable_text'
   | 'source_too_long'
-  | 'request_rejected';
+  | 'request_rejected'
+  | 'not_enough_information';
 
 export interface CvFailure {
   code: CvFailureCode;

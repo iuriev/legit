@@ -441,9 +441,58 @@ describe('Writing and checking the CV (e2e)', () => {
       const cvId = await generate();
       const cv = await finished(cvId);
 
-      expect(cv.failure).toMatchObject({ code: 'generation_failed', retryable: true });
+      // The model may have erred, so the attempts were made; after three of
+      // them the reason is that nothing the owner provided could be used.
+      expect(cv.failure).toMatchObject({ code: 'not_enough_information', retryable: false });
+      expect(cv.failure?.message).toContain('enough information about your background');
       expect(cv.document).toBeNull();
       expect((await jobs(cvId))[1]).toEqual({ kind: 'compose', status: 'failed', attempts: 3 });
+      expect(writingRequests()).toHaveLength(6);
+    });
+
+    it('fails at once, and cannot be retried, when the writer finds nothing to write', async () => {
+      const empty = draft({ summary: { text: '', facts: [] }, experience: [], skills: [] });
+      empty.contact.fullName = none;
+      empty.contact.email = none;
+      stub.reply(json(empty));
+
+      const cvId = await generate();
+      const cv = await finished(cvId);
+
+      expect(cv.failure).toMatchObject({ code: 'not_enough_information', retryable: false });
+      expect(cv.failure?.message).toContain('enough information about your background');
+      expect(cv.document).toBeNull();
+      // One writing call: no rewrite, as nothing was rejected, and no second attempt.
+      expect(writingRequests()).toHaveLength(1);
+      expect((await jobs(cvId))[1]).toEqual({ kind: 'compose', status: 'failed', attempts: 1 });
+
+      const retry = await request(app.getHttpServer())
+        .post(`/api/cvs/${cvId}/retry`)
+        .set('Cookie', cookie)
+        .expect(409);
+      expect((retry.body as { code: string }).code).toBe('not_retryable');
+      expect(await jobs(cvId)).toHaveLength(2);
+    });
+
+    it('tries again when every item was rejected and the rewrite takes them all out', async () => {
+      const groundless = draft({
+        summary: { text: 'Seasoned leader.', facts: [] },
+        experience: [],
+        skills: [],
+      });
+      groundless.contact.fullName = none;
+      groundless.contact.email = none;
+      const empty = draft({ summary: { text: '', facts: [] }, experience: [], skills: [] });
+      empty.contact.fullName = none;
+      empty.contact.email = none;
+      // The first attempt ends with nothing; the second writes a draft that passes.
+      stub.reply(json(groundless), json(empty), json(draft()));
+
+      const cvId = await generate();
+      const cv = await finished(cvId);
+
+      expect(cv.state).toBe('ready');
+      expect((await jobs(cvId))[1]).toEqual({ kind: 'compose', status: 'done', attempts: 2 });
     });
 
     it('shows the checking stage while rejected items are being rewritten', async () => {
