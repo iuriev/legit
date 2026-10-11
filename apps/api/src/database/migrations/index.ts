@@ -5,6 +5,7 @@ import { CreateUsers1791410000000 } from './1791410000000-create-users';
 import { CreateCvs1791420000000 } from './1791420000000-create-cvs';
 import { AddRequestRejectedFailure1791430000000 } from './1791430000000-add-request-rejected-failure';
 import { AddNotEnoughInformationFailure1791440000000 } from './1791440000000-add-not-enough-information-failure';
+import { AddSourceDescribesBackground1791450000000 } from './1791450000000-add-source-describes-background';
 
 /**
  * Every migration, oldest first. Listed explicitly instead of through a glob
@@ -16,4 +17,5 @@ export const migrations: (new () => MigrationInterface)[] = [
   CreateCvs1791420000000,
   AddRequestRejectedFailure1791430000000,
   AddNotEnoughInformationFailure1791440000000,
+  AddSourceDescribesBackground1791450000000,
 ];

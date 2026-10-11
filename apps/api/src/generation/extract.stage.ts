@@ -67,6 +67,10 @@ export class ExtractStage {
       }
       // The facts are all that is needed from here on.
       await manager.query(`DELETE FROM "cv_sources" WHERE "cv_id" = $1`, [job.cvId]);
+      await manager.query(`UPDATE "cvs" SET "source_describes_background" = $2 WHERE "id" = $1`, [
+        job.cvId,
+        answer.describesBackground,
+      ]);
 
       if (questions.length > 0) {
         await manager.query(

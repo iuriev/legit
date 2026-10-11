@@ -136,6 +136,17 @@ describe('Editing a CV and downloading it (e2e)', () => {
       expect((await read()).document).toEqual(document);
     });
 
+    it('accepts a CV without a name and without positions: the least content is asked of a generated CV only', async () => {
+      const document = edited((d) => {
+        d.contact.fullName = '';
+        d.experience = [];
+      });
+
+      await save(0, document).expect(200);
+
+      expect((await read()).document).toEqual(document);
+    });
+
     it('lets entries, bullet points, links and skills be removed', async () => {
       const document = edited((d) => {
         d.experience = [];

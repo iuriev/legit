@@ -568,14 +568,16 @@ export function checkDraft(draft: CvDraft, checkableFacts: CheckableFact[]): Che
   return { document: { contact, summary, experience, education, skills }, rejected };
 }
 
-/** Whether a checked CV has anything in it at all. */
-export function isEmptyDocument(document: CvDocument): boolean {
-  const { contact, summary, experience, education, skills } = document;
-  return (
-    [contact.fullName, contact.email, contact.phone, contact.location, summary].every(
-      (text) => text === '',
-    ) && contact.links.length + experience.length + education.length + skills.length === 0
-  );
+/**
+ * Whether a checked CV says who it is about or what they did: it has a full
+ * name or at least one position. Skills and a place of study alone can be
+ * quoted from a document about anything; they are not a CV of anyone. A CV
+ * with nothing in it fails this too.
+ *
+ * It is asked of a generated CV only. What the owner saves by hand is theirs.
+ */
+export function saysWhoOrWhat(document: CvDocument): boolean {
+  return document.contact.fullName !== '' || document.experience.length > 0;
 }
 
 /** How many items a CV has: every non-empty field, bullet point, skill and link. */

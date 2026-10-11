@@ -78,7 +78,7 @@ describe('Writing and checking the CV (e2e)', () => {
           statement(`Statement ${String(index)}.`, atLine(index, line)),
         ),
       ),
-      json({ questions }),
+      json({ describesBackground: true, questions }),
     );
   };
   /**
@@ -88,7 +88,7 @@ describe('Writing and checking the CV (e2e)', () => {
   const generate = async (): Promise<string> => {
     stub.replyFirst(
       reading(...SOURCE.map((line, index) => statement('Statement.', atLine(index, line)))),
-      json({ questions: [] }),
+      json({ describesBackground: true, questions: [] }),
     );
     return startCv(app, cookie, SOURCE.join('\n'));
   };
@@ -132,7 +132,7 @@ describe('Writing and checking the CV (e2e)', () => {
           ...reading(...SOURCE.map((line, index) => statement('Statement.', atLine(index, line)))),
           delayMs: 300,
         },
-        json({ questions: [QUESTION] }),
+        json({ describesBackground: true, questions: [QUESTION] }),
         { ...json(withBullet('Cut build time by 40%', [3, 5])), delayMs: 300 },
       );
 
@@ -219,7 +219,7 @@ describe('Writing and checking the CV (e2e)', () => {
     it('gets the numbered facts and the target role, and not the source document', async () => {
       stub.reply(
         reading(...SOURCE.map((line, index) => statement('Statement.', atLine(index, line)))),
-        json({ questions: [QUESTION] }),
+        json({ describesBackground: true, questions: [QUESTION] }),
         json(draft()),
       );
       const cvId = await startCv(app, cookie, SOURCE.join('\n'));
@@ -259,7 +259,7 @@ describe('Writing and checking the CV (e2e)', () => {
           statement('Name.', atLine(0, SOURCE[0] ?? '')),
           statement('Odd.', atLine(1, hostile)),
         ),
-        json({ questions: [] }),
+        json({ describesBackground: true, questions: [] }),
         json(draft({ summary: { text: '', facts: [] }, experience: [], skills: [] })),
       );
 
@@ -279,7 +279,7 @@ describe('Writing and checking the CV (e2e)', () => {
       const leading = { section: 'experience', text: 'Did you lead a team of 12 at Acme?' };
       stub.reply(
         reading(...SOURCE.map((line, index) => statement('Statement.', atLine(index, line)))),
-        json({ questions: [leading] }),
+        json({ describesBackground: true, questions: [leading] }),
         // Fact 5 is the answer "Yes, for 2 years". The 12 is only in the question.
         json(withBullet('Led a team of 12 for 2 years', [5])),
         json(withBullet('Led a team for 2 years', [5])),
@@ -480,13 +480,93 @@ describe('Writing and checking the CV (e2e)', () => {
         experience: [],
         skills: [],
       });
-      groundless.contact.fullName = none;
+      groundless.contact.fullName = { value: 'Olena Šimić', facts: [] };
       groundless.contact.email = none;
       const empty = draft({ summary: { text: '', facts: [] }, experience: [], skills: [] });
       empty.contact.fullName = none;
       empty.contact.email = none;
       // The first attempt ends with nothing; the second writes a draft that passes.
       stub.reply(json(groundless), json(empty), json(draft()));
+
+      const cvId = await generate();
+      const cv = await finished(cvId);
+
+      expect(cv.state).toBe('ready');
+      expect((await jobs(cvId))[1]).toEqual({ kind: 'compose', status: 'done', attempts: 2 });
+    });
+
+    it('fails at once when the draft has skills and a place of study but no name and no position', async () => {
+      const nobody = draft({
+        summary: { text: '', facts: [] },
+        experience: [],
+        education: [
+          { institution: 'Acme', degree: '', startDate: '', endDate: '', details: '', facts: [2] },
+        ],
+      });
+      nobody.contact.fullName = none;
+      nobody.contact.email = none;
+      stub.reply(json(nobody));
+
+      const cvId = await generate();
+      const cv = await finished(cvId);
+
+      expect(cv.failure).toMatchObject({ code: 'not_enough_information', retryable: false });
+      expect(cv.document).toBeNull();
+      expect(writingRequests()).toHaveLength(1);
+      expect((await jobs(cvId))[1]).toEqual({ kind: 'compose', status: 'failed', attempts: 1 });
+    });
+
+    it('does not try again when the draft named nobody, even if a skill of it was rejected', async () => {
+      const nobody = draft({
+        summary: { text: '', facts: [] },
+        experience: [],
+        skills: [
+          { name: 'Node.js', facts: [4] },
+          { name: 'Kubernetes', facts: [99] },
+        ],
+      });
+      nobody.contact.fullName = none;
+      nobody.contact.email = none;
+      // The draft and its rewrite.
+      stub.reply(json(nobody), json(nobody));
+
+      const cvId = await generate();
+      const cv = await finished(cvId);
+
+      expect(cv.failure).toMatchObject({ code: 'not_enough_information', retryable: false });
+      expect(writingRequests()).toHaveLength(2);
+      expect((await jobs(cvId))[1]).toEqual({ kind: 'compose', status: 'failed', attempts: 1 });
+    });
+
+    it('accepts a name without a position', async () => {
+      stub.reply(json(draft({ summary: { text: '', facts: [] }, experience: [] })));
+      const student = await finished(await generate());
+
+      expect(student.state).toBe('ready');
+      expect(student.document?.experience).toEqual([]);
+      expect(student.document?.contact.fullName).toBe('Olena Šimić');
+    });
+
+    it('accepts a position without a name', async () => {
+      const nameless = draft();
+      nameless.contact.fullName = none;
+      stub.reply(json(nameless));
+      const worker = await finished(await generate());
+      expect(worker.state).toBe('ready');
+      expect(worker.document?.contact.fullName).toBe('');
+      expect(worker.document?.experience).toHaveLength(1);
+    });
+
+    it('tries again when the name and the positions were lost to the checks', async () => {
+      // A name that names no fact and a position that names one that does not exist.
+      const lost = draft({ summary: { text: '', facts: [] } });
+      lost.contact.fullName = { value: 'Olena Šimić', facts: [] };
+      const position = lost.experience[0];
+      if (position) {
+        position.facts = [99];
+      }
+      // First attempt: the draft and its rewrite. Second attempt: a draft that passes.
+      stub.reply(json(lost), json(lost), json(draft()));
 
       const cvId = await generate();
       const cv = await finished(cvId);
@@ -541,11 +621,77 @@ describe('Writing and checking the CV (e2e)', () => {
     });
   });
 
+  describe('a source that does not describe a background', () => {
+    const facts = reading(
+      ...SOURCE.map((line, index) => statement('Statement.', atLine(index, line))),
+    );
+    const answerAll = (cvId: string, questionIds: (string | undefined)[], answer: string | null) =>
+      request(app.getHttpServer())
+        .post(`/api/cvs/${cvId}/answers`)
+        .set('Cookie', cookie)
+        .send({ answers: questionIds.map((questionId) => ({ questionId, answer })) })
+        .expect(204);
+
+    it('is not written into a CV when every question is skipped', async () => {
+      stub.reply(facts, json({ describesBackground: false, questions: [QUESTION] }));
+      const cvId = await startCv(app, cookie, SOURCE.join('\n'));
+      const waiting = await finished(cvId);
+      expect(waiting.state).toBe('awaiting_answers');
+
+      await answerAll(cvId, [waiting.questions[0]?.id], null);
+      const cv = await finished(cvId);
+
+      expect(cv.failure).toMatchObject({ code: 'not_enough_information', retryable: false });
+      expect(cv.failure?.message).toContain('enough information about your background');
+      expect(cv.document).toBeNull();
+      // The reading and the questions, and no call to the writer.
+      expect(stub.messageRequests).toHaveLength(2);
+      expect((await jobs(cvId))[1]).toEqual({ kind: 'compose', status: 'failed', attempts: 1 });
+    });
+
+    it('fails without waiting for answers when there is nothing to ask', async () => {
+      stub.reply(facts, json({ describesBackground: false, questions: [] }));
+      const cvId = await startCv(app, cookie, SOURCE.join('\n'));
+      const cv = await finished(cvId);
+
+      expect(cv.failure).toMatchObject({ code: 'not_enough_information', retryable: false });
+      expect(stub.messageRequests).toHaveLength(2);
+    });
+
+    it('is written when the owner answers a question', async () => {
+      stub.reply(
+        facts,
+        json({ describesBackground: false, questions: [QUESTION] }),
+        json(withBullet('Cut build time by 40%', [5])),
+      );
+      const cvId = await startCv(app, cookie, SOURCE.join('\n'));
+      const waiting = await finished(cvId);
+
+      await answerAll(cvId, [waiting.questions[0]?.id], ANSWER);
+      const cv = await finished(cvId);
+
+      expect(cv.state).toBe('ready');
+      expect(cv.document?.experience[0]?.bullets).toEqual(['Cut build time by 40%']);
+    });
+
+    it('does not stop a source that does describe a background, with every question skipped', async () => {
+      stub.reply(facts, json({ describesBackground: true, questions: [QUESTION] }), json(draft()));
+      const cvId = await startCv(app, cookie, SOURCE.join('\n'));
+      const waiting = await finished(cvId);
+
+      await answerAll(cvId, [waiting.questions[0]?.id], null);
+      const cv = await finished(cvId);
+
+      expect(cv.state).toBe('ready');
+      expect(cv.document?.contact.fullName).toBe('Olena Šimić');
+    });
+  });
+
   describe('manual retry after a failed writing', () => {
     it('writes again from the stored facts and answers without asking the questions again', async () => {
       stub.reply(
         reading(...SOURCE.map((line, index) => statement('Statement.', atLine(index, line)))),
-        json({ questions: [QUESTION] }),
+        json({ describesBackground: true, questions: [QUESTION] }),
         apiError(529, 'overloaded_error'),
         apiError(529, 'overloaded_error'),
         apiError(529, 'overloaded_error'),

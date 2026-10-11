@@ -91,7 +91,7 @@ export function scriptExtraction(
       statement('She was a backend engineer at Acme.', atLine(1, 'Backend engineer at Acme')),
       statement('She knows Node.js.', atLine(2, 'Skills: Node.js')),
     ),
-    json({ questions }),
+    json({ describesBackground: true, questions }),
   );
 }
 

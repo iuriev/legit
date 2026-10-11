@@ -57,11 +57,23 @@ describe('cleanQuestions on content', () => {
 
 describe('questionsSchema', () => {
   it('accepts an empty list', () => {
-    expect(questionsSchema.safeParse({ questions: [] }).success).toBe(true);
+    expect(questionsSchema.safeParse({ describesBackground: true, questions: [] }).success).toBe(
+      true,
+    );
   });
 
   it('rejects a missing list and a question without text', () => {
-    expect(questionsSchema.safeParse({}).success).toBe(false);
-    expect(questionsSchema.safeParse({ questions: [{ section: 'contact' }] }).success).toBe(false);
+    expect(questionsSchema.safeParse({ describesBackground: true }).success).toBe(false);
+    expect(
+      questionsSchema.safeParse({ describesBackground: true, questions: [{ section: 'contact' }] })
+        .success,
+    ).toBe(false);
+  });
+
+  it('rejects an answer that does not say what the facts describe', () => {
+    expect(questionsSchema.safeParse({ questions: [] }).success).toBe(false);
+    expect(questionsSchema.safeParse({ describesBackground: 'yes', questions: [] }).success).toBe(
+      false,
+    );
   });
 });

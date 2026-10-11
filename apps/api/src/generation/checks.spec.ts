@@ -6,13 +6,13 @@ import {
   cleanItemText,
   countItems,
   hasUnreadableNumber,
-  isEmptyDocument,
   joinedNumbersIn,
   MAX_REFS,
   MAX_SUMMARY_REFS,
   numbersIn,
   readableFact,
   rejectionReason,
+  saysWhoOrWhat,
 } from './checks';
 import type { CvDraft } from './draft';
 
@@ -942,8 +942,13 @@ describe('checkDraft, rule by rule', () => {
   });
 });
 
-describe('isEmptyDocument, field by field', () => {
+describe('saysWhoOrWhat', () => {
   const empty = checkDraft(emptyDraft(), checkable).document;
+  const position = { company: 'Acme', title: '', location: '', startDate: '', endDate: '' };
+
+  it('is not satisfied by a CV with nothing in it', () => {
+    expect(saysWhoOrWhat(empty)).toBe(false);
+  });
 
   it.each<[string, Partial<CvDocument>]>([
     ['an email address', { contact: { ...empty.contact, email: 'a@b.co' } }],
@@ -952,31 +957,29 @@ describe('isEmptyDocument, field by field', () => {
     ['a link', { contact: { ...empty.contact, links: ['github.com/olena'] } }],
     ['a summary', { summary: 'Engineer.' }],
     [
-      'a position',
-      {
-        experience: [
-          { company: 'Acme', title: '', location: '', startDate: '', endDate: '', bullets: [] },
-        ],
-      },
-    ],
-    [
       'a degree',
       { education: [{ institution: 'KPI', degree: '', startDate: '', endDate: '', details: '' }] },
     ],
-  ])('is not empty with only %s', (_name, part) => {
-    expect(isEmptyDocument({ ...empty, ...part })).toBe(false);
+    ['skills', { skills: ['Node.js', 'PostgreSQL'] }],
+    [
+      'a place of study and skills',
+      {
+        education: [{ institution: 'KPI', degree: '', startDate: '', endDate: '', details: '' }],
+        skills: ['User story mapping'],
+      },
+    ],
+  ])('is not satisfied by only %s', (_name, part) => {
+    expect(saysWhoOrWhat({ ...empty, ...part })).toBe(false);
   });
-});
 
-describe('isEmptyDocument', () => {
-  it('tells a CV with nothing in it from one with a single item', () => {
-    const empty = checkDraft(emptyDraft(), checkable).document;
-
-    expect(isEmptyDocument(empty)).toBe(true);
-    expect(isEmptyDocument({ ...empty, skills: ['Node.js'] })).toBe(false);
-    expect(isEmptyDocument({ ...empty, contact: { ...empty.contact, fullName: 'Olena' } })).toBe(
-      false,
+  it('is satisfied by a full name alone', () => {
+    expect(saysWhoOrWhat({ ...empty, contact: { ...empty.contact, fullName: 'Olena' } })).toBe(
+      true,
     );
+  });
+
+  it('is satisfied by a position alone', () => {
+    expect(saysWhoOrWhat({ ...empty, experience: [{ ...position, bullets: [] }] })).toBe(true);
   });
 });
 

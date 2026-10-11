@@ -5,7 +5,7 @@ import { cvDocumentSchema } from '../cvs/cv-document.schema';
 import { GenerationError } from '../jobs/generation-error';
 import type { ClaimedJob, JobCommit } from '../jobs/job-handlers';
 import { LlmClient } from '../llm/llm.client';
-import { type CheckableFact, checkDraft, countItems, isEmptyDocument } from './checks';
+import { type CheckableFact, checkDraft, cleanItemText, countItems, saysWhoOrWhat } from './checks';
 import { type CvDraft, draftSchema } from './draft';
 import { REWRITE_INSTRUCTION, WRITE_SYSTEM, type WriterFact, writeUserMessage } from './prompts';
 
@@ -33,7 +33,18 @@ export class ComposeStage {
   ) {}
 
   async run(job: ClaimedJob): Promise<JobCommit> {
-    const { targetRole, facts } = await this.load(job.cvId);
+    const { targetRole, facts, describesBackground } = await this.load(job.cvId);
+    if (!describesBackground && !facts.some((fact) => fact.origin === 'answer')) {
+      // The source was read as something other than a person's background, and
+      // the owner added nothing of their own. Whatever the writer made of such
+      // facts would not be a CV of anyone. The reading is the model's; that no
+      // answer was given is ours to see, and one answer is enough to go on.
+      throw new GenerationError(
+        'not_enough_information',
+        false,
+        'The source does not describe a background and no question was answered',
+      );
+    }
     const writerFacts: WriterFact[] = facts.map((fact) => ({
       ref: fact.ref,
       source: fact.origin === 'answer' ? 'answer' : 'document',
@@ -68,16 +79,20 @@ export class ComposeStage {
     if (!document.success) {
       throw new GenerationError('generation_failed', true, 'The checked draft is not a valid CV');
     }
-    if (isEmptyDocument(document.data)) {
-      // Better a failure than a "ready" CV with nothing in it. A writer whose
-      // first draft is empty found nothing in the facts, and would find nothing
-      // again. One whose items were rejected may have erred, so the attempt is
-      // repeated; the reason the owner is given in the end is the same.
-      const wroteNothing = !rewrote;
+    if (!saysWhoOrWhat(document.data)) {
+      // Better a failure than a "ready" CV of nobody. A writer whose first
+      // draft named nobody and no position found none in the facts, and would
+      // find none again. One that did write a name or a position and lost them
+      // to the checks may have erred, so the attempt is repeated; the reason
+      // the owner is given in the end is the same.
+      const lostToChecks =
+        cleanItemText(draft.contact.fullName.value) !== '' || draft.experience.length > 0;
       throw new GenerationError(
         'not_enough_information',
-        !wroteNothing,
-        wroteNothing ? 'The writer left the draft empty' : 'Nothing in the draft passed the checks',
+        lostToChecks,
+        lostToChecks
+          ? 'No name and no position passed the checks'
+          : 'The writer found no name and no position',
       );
     }
     // After a rewrite, an item is missing whether the check refused it again
@@ -107,11 +122,12 @@ export class ComposeStage {
     });
   }
 
-  private async load(cvId: string): Promise<{ targetRole: string; facts: StoredFact[] }> {
-    const [cv] = await this.dataSource.query<{ target_role: string }[]>(
-      `SELECT "target_role" FROM "cvs" WHERE "id" = $1`,
-      [cvId],
-    );
+  private async load(
+    cvId: string,
+  ): Promise<{ targetRole: string; facts: StoredFact[]; describesBackground: boolean }> {
+    const [cv] = await this.dataSource.query<
+      { target_role: string; source_describes_background: boolean }[]
+    >(`SELECT "target_role", "source_describes_background" FROM "cvs" WHERE "id" = $1`, [cvId]);
     const facts = await this.dataSource.query<StoredFact[]>(
       `SELECT "fact"."ref", "fact"."origin", "fact"."quote", "question"."text" AS "question"
          FROM "facts" "fact"
@@ -123,7 +139,11 @@ export class ComposeStage {
     if (!cv || facts.length === 0) {
       throw new GenerationError('generation_failed', false, 'The CV has no facts to write from');
     }
-    return { targetRole: cv.target_role, facts };
+    return {
+      targetRole: cv.target_role,
+      facts,
+      describesBackground: cv.source_describes_background,
+    };
   }
 
   /** Progress for the owner. Not part of the stage's result, so not in its transaction. */

@@ -8,8 +8,14 @@ export const MAX_QUESTION_LENGTH = 300;
 
 const SECTIONS = ['contact', 'summary', 'experience', 'education', 'skills'] as const;
 
-/** What the model is asked to return. Kept loose: `cleanQuestions` applies the limits. */
+/**
+ * What the model is asked to return. The questions are kept loose:
+ * `cleanQuestions` applies the limits. `describesBackground` is the model's
+ * reading of what kind of material the facts come from; on its own it decides
+ * nothing (see `ComposeStage`).
+ */
 export const questionsSchema = z.object({
+  describesBackground: z.boolean(),
   questions: z.array(z.object({ section: z.string(), text: z.string() })),
 });
 

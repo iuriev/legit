@@ -30,6 +30,10 @@ export class Cv {
   @Column({ type: 'int' })
   version!: number;
 
+  /** What the reading made of the source: a person's background, or something else. */
+  @Column({ name: 'source_describes_background', type: 'boolean' })
+  sourceDescribesBackground!: boolean;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

@@ -19,7 +19,9 @@ export const READ_INSTRUCTION =
 
 export const QUESTIONS_SYSTEM = `You help prepare a CV for a specific target role. You are given a JSON object with the target role and numbered facts: lines quoted from material the person supplied about themselves, in the order of the document. A sentence may run over two or three consecutive facts.
 
-Work out what a CV for this role needs that the facts do not contain or state too vaguely to use, and ask the person for it. Good questions are about a missing name or email address, a position without an employer, a title or dates, an achievement described so loosely that a concrete result probably exists, or missing education. Ask only for things the person can answer in a sentence or two and that would make the CV better for this role.
+First decide what kind of material the facts come from, and return it as "describesBackground". It is true when the material describes a person's own professional background: a CV, a profile, or notes of any length about their work, education or skills, even if short, informal or incomplete. It is false only when the material is plainly about something else — a report, an essay, coursework, an article, a contract, a job advertisement, a product description — even if it names its author, an institution or a subject that a person could have studied. When in doubt, it is true.
+
+Then work out what a CV for this role needs that the facts do not contain or state too vaguely to use, and ask the person for it. Good questions are about a missing name or email address, a position without an employer, a title or dates, an achievement described so loosely that a concrete result probably exists, or missing education. Ask only for things the person can answer in a sentence or two and that would make the CV better for this role.
 
 Ask for the information itself, with an open question such as "When did you start and finish at Acme?". Do not propose a value and ask for confirmation, and do not put anything into a question that the facts do not state: the person's answer is used on its own, without your question.
 
