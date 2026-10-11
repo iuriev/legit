@@ -6,6 +6,13 @@
   "engines": {
     "node": ">=24.11"
   },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=24.11",
+      "onFail": "error"
+    }
+  },
   "scripts": {
     "build": "pnpm -r --if-present build",
     "format": "prettier --write .",
